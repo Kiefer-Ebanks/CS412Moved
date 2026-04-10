@@ -15,8 +15,29 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 // The base URL for the API
 const API_BASE = 'https://cs-webapps.bu.edu/kebanks/mini_insta';
 
+// Origin for resolving media image paths from the API
+const API_ORIGIN = new URL(API_BASE).origin;
+
 // The Profile's pk in Django
 const PROFILE_ID = 1; // hardcoded for testing
+
+/** Turn media image URLs into a full https URI for Image. */
+function toAbsoluteImageUrl(url: string | null | undefined): string | null {
+  if (url == null) {
+    return null;
+  }
+  const u = String(url).trim();
+  if (!u) {
+    return null;
+  }
+  if (u.startsWith('//')) {
+    return `https:${u}`;
+  }
+  if (u.startsWith('/')) {
+    return `${API_ORIGIN}${u}`;
+  }
+  return u;
+}
 
 /** Shape of one profile from the ProfileSerializer */
 type ProfileFromApi = {
@@ -57,6 +78,29 @@ type PostFromApi = {
     image: string;
   }>;
 };
+
+/** Django REST Framework page-number pagination wraps lists in { results: [...] } */
+type PaginatedPostsResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PostFromApi[];
+};
+
+function postsFromResponse(payload: unknown): PostFromApi[] {
+  if (Array.isArray(payload)) { // if the payload is an array, return it as a PostFromApi array
+    return payload as PostFromApi[];
+  }
+  if ( // if the payload is not null, an object, has a results key, and the results key is an array, return the results as a PostFromApi array
+    payload !== null &&  // if the payload is not null,
+    typeof payload === 'object' && // checks if the payload is an object
+    'results' in payload && // checks if the payload has a results key
+    Array.isArray((payload as PaginatedPostsResponse).results) // checks if the results key is an array
+  ) {
+    return (payload as PaginatedPostsResponse).results; // then it returns the results as a PostFromApi array
+  }
+  return [];
+}
 
 
 
@@ -128,8 +172,8 @@ export default function ProfileScreen() {
         throw new Error(`Posts request failed (${response.status})`);
       }
 
-      const data = (await response.json()) as PostFromApi[];
-      setPosts(data);
+      const postsResponse = (await response.json()) as PaginatedPostsResponse;
+      setPosts(postsFromResponse(postsResponse));
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Something went wrong';
       setPostsError(message);
@@ -144,6 +188,8 @@ export default function ProfileScreen() {
     void fetchProfile();
     void fetchPosts();
   }, [fetchProfile, fetchPosts]);
+
+  const avatarUri = profile ? toAbsoluteImageUrl(profile.profile_image_url) : null; // converts the profile image url to a full https uri for the Image component
 
   return (
     <ParallaxScrollView
@@ -180,11 +226,9 @@ export default function ProfileScreen() {
         </View>
       ) : profile ? (
         <>
-
-          {/* Renders a profile picture only when one exists in the API response. */}
-          {profile.profile_image_url ? (
+          {avatarUri ? ( // if the avatar uri is not null, show the image
             <Image
-              source={{ uri: profile.profile_image_url }}
+              source={{ uri: avatarUri }}
               style={styles.avatar}
               accessibilityLabel="Profile picture"
             />
@@ -197,6 +241,7 @@ export default function ProfileScreen() {
       ) : null}
 
 
+      {/* Shows the posts for the profile */}
       {/* similar loading and error handling and syle to the profile when showing posts*/}
       {postsLoading ? (
         <View style={styles.centered}>
@@ -213,12 +258,24 @@ export default function ProfileScreen() {
       </View>
       ) : posts.length > 0 ? (
         <View>
-          {posts.map((post) => (
-            <View key={post.id}>
-              <ThemedText type="subtitle">{post.caption}</ThemedText> {/* creating the caption as a subtitle*/}
-              <ThemedText>{post.timestamp}</ThemedText>
-            </View>
-          ))}
+          {posts.map((post) => { // maps over the posts and shows the first photo for each post
+            const firstPhotoUrl = post.images?.[0]?.image;
+            const thumbUri = toAbsoluteImageUrl(firstPhotoUrl ?? null); // converts the first photo url to a full https uri for the Image component
+            return (
+              <View key={post.id} style={styles.postCard}>
+                <ThemedText type="subtitle">{post.caption}</ThemedText>
+                {thumbUri ? (
+                  <Image
+                    source={{ uri: thumbUri }}
+                    style={styles.postImage}
+                    contentFit="cover"
+                    accessibilityLabel="Post photo"
+                  />
+                ) : null}
+                <ThemedText>{post.timestamp}</ThemedText>
+              </View>
+            );
+          })}
         </View>
       ) : null}
 

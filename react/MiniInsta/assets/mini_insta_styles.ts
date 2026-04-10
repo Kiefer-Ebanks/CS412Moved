@@ -52,4 +52,13 @@ export const styles = StyleSheet.create({
     opacity: 0.6,
     fontSize: 13,
   },
+  postCard: {
+    marginBottom: 20,
+    gap: 8,
+  },
+  postImage: {
+    width: '100%',
+    height: 240,
+    borderRadius: 8,
+  },
 });
