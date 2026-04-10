@@ -1,0 +1,74 @@
+<!-- File: show_profile.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 2/13/2026 -->
+<!-- Description: The page that displays a single profile -->
+<!-- The html template for a single profile that takes in context from the views.py ProfileDetailView function to display the profile -->
+
+{% extends 'mini_insta/base.html' %} <!-- linking to the base.html template-->
+
+{% block content %}
+<html>
+
+    <main class="profile-container"> 
+        <div class="profile-content">
+            <div class="profile-left">
+                <h1 class="display-name">{{ profile.display_name }}</h1>
+                <div class="profile-info">
+                    <h2 class="username">{{ profile.username }}</h2>
+                    <div class="account-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ profile.get_all_posts.count }}</span>
+                            <span class="stat-label">posts</span>
+                        </div>
+                        <div class="stat-item">
+                            <a href="{% url 'show_followers' profile.pk %}" class="stat-link">
+                                <span class="stat-number">{{ profile.get_num_followers }}</span>
+                                <span class="stat-label">followers</span>
+                            </a>
+                        </div>
+
+                        <div class="stat-item">
+
+                            <a href="{% url 'show_following' profile.pk %}" class="stat-link">
+                                <span class="stat-number">{{ profile.get_num_following }}</span>
+                                <span class="stat-label">following</span>
+                            </a>
+                        </div>
+                    </div>
+                    <p class="join-date">Joined {{ profile.join_date}}</p>
+                    {% if request.user.is_authenticated and not is_own_profile %}
+                    <div class="profile-follow-actions">
+                        {% if already_follows %}
+                        <a href="{% url 'delete_follow' profile.pk %}" class="btn btn-secondary">Unfollow</a>
+                        {% else %}
+                        <a href="{% url 'follow' profile.pk %}" class="btn btn-primary">Follow</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="profile-image-container">
+                <img src="{{ profile.profile_image_url }}" alt="Profile Image" class="profile-image">
+            </div>
+        </div>
+        
+        <div class="profile-bio">
+            <p>{{ profile.bio_text }}</p>
+        </div>
+
+        <div class="profile-posts">
+                {% for post in profile.get_all_posts %}
+                    <div class="profile-post">
+                        <a href="{% url 'show_post' post.pk %}"> <!-- linking to the show_post.html template to display the post -->
+                            {% if post.get_all_photos.first.get_image_url %}
+                                <img src="{{ post.get_all_photos.first.get_image_url }}" alt="Photo Image" class="photo-image">
+                            {% else %}
+                                <img src="https://alliancehealthprofessionals.com/wp-content/themes/apexclinic/images/no-image/No-Image-Found-400x264.png" alt="No Photos Found" class="no-photos-image"> <!-- displaying a default image if no photos are found -->
+                            {% endif %}
+                        </a>
+                    </div>
+                {% endfor %}     
+        </div>
+    </main>
+</html>
+{% endblock %}

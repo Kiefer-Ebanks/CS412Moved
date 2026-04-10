@@ -1,0 +1,29 @@
+<!-- File: update_post_form.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 2/26/2026 -->
+<!-- Description: The form template for updating a post -->
+<!-- The html template for the form to update a post that takes in context from the views.py UpdatePostView function to update the post -->
+
+{% extends 'mini_insta/base.html' %} <!-- linking to the base.html template-->
+
+{% block content %}
+<main>
+    <div class="post-container post-form-container">
+        <h1>Update Post</h1>
+        <p>Update the caption for this post.</p>
+
+        <form method="POST" class="post-form">
+            {% csrf_token %}
+
+            {{ form.caption }}
+
+            <div class="post-form-actions">
+                <button type="submit" class="btn btn-primary">Update Post</button>
+            </div>
+        </form>
+
+        <form action="{% url 'show_profile' post.profile.pk %}" method="GET" class="post-form">
+            <button type="submit" class="btn btn-secondary">Cancel</button>
+        </form>
+    </div>
+</main>
+{% endblock %}

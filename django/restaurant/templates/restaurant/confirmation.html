@@ -1,0 +1,48 @@
+<!-- File: restaurant/templates/restaurant/confirmation.html
+Author: Kiefer Ebanks (kebanks@bu.edu), 2/3/2026
+Description: The confirmation response html template for the restaurant app
+This is the confirmation page that displays the order details -->
+
+{% extends 'restaurant/base.html' %}    <!-- linking to the base.html template-->
+
+<html>
+    <head>
+        <title>Order Confirmation</title>
+    </head> 
+    <body>
+        {% block content %}
+        <h1 class="page-title">Order Confirmation</h1>
+        
+        <div class="confirmation-layout">
+            <div class="customer-info">
+                <h2>Customer Information</h2>
+                <p>Name: {{ name }}</p>
+                <p>Phone: {{ phone }}</p>
+                <p>Email: {{ email }}</p>
+            </div>
+
+            <div class="order-details">
+                <h3>Thank you for your order, {{ name }}!</h3>
+                <p>Your order of {{ ordered_items|join:", " }} has been received.</p>
+                {% if filet_sauce %}
+                <p><strong>Filet Mignon Sauce:</strong> {{ filet_sauce }}</p>
+                {% endif %}
+                <p>Total Price: ${{ total_price }}</p>
+                <p>Your food will be ready at: {{ pickup_time }}</p>
+
+                {% if email or phone %} <!-- Check so see if an email or phone number was provided to display customer details -->
+                <p>We have sent a receipt to 
+                    {% if email %} {{ email }} {% endif %} <!--  Display the email if it was provided -->
+                    {% if email and phone %} and {% endif %} <!--  Display the and if both email and phone were provided -->
+                    {% if phone %} {{ phone }} {% endif %} <!--  Display the phone number if it was provided -->
+                </p>
+                {% endif %}
+
+                <h2>Special Instructions: </h2>
+                <p>{{ special_instructions }}</p>
+            </div>
+        </div>
+
+        {% endblock %}
+    </body>
+</html>

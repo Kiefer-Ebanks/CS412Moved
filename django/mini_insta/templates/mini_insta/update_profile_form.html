@@ -1,0 +1,42 @@
+<!-- File: update_profile_form.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 2/26/2026 -->
+<!-- Description: Template for updating a profile using UpdateView -->
+ <!-- The html template for the form to update a profile that takes in context from the views.py UpdateProfileView function to update the profile -->
+
+{% extends 'mini_insta/base.html' %} <!-- linking to the base.html template-->
+
+{% block content %}
+<main class="profile-edit-main">
+    <div class="profile-container">
+        <div class="profile-content">
+            <h1>Update Profile</h1>
+
+            <form method="post" class="profile-edit-form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.display_name.id_for_label }}">Display name</label>
+                    {{ form.display_name }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.bio_text.id_for_label }}">Bio</label>
+                    {{ form.bio_text }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.profile_image_url.id_for_label }}">Profile image URL</label>
+                    {{ form.profile_image_url }}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                    <a href="{% url 'show_profile' profile.pk %}">
+                        <button type="button" class="btn btn-primary">Cancel</button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}

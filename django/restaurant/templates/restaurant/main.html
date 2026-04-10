@@ -1,0 +1,34 @@
+<!-- File: restaurant/templates/restaurant/main.html
+Author: Kiefer Ebanks (kebanks@bu.edu), 2/3/2026
+Description: The main html template for the restaurant app
+This is the main page template that displays the welcome home page -->
+
+{% extends 'restaurant/base.html' %} <!-- linking to the base.html template-->
+
+<html>
+    <head>
+        <title>Main</title>
+    </head>
+    <body>
+         <!-- Creating the information that will be subsituted in the base.html template-->
+        {% block content %}
+        <div class="main-layout">
+            <div class="main-text">
+                <h1>Red Cuts Steakhouse</h1>
+                <p>Welcome to our premium gourmet steakhouse.</p>
+                <p>We are located at 4086 Providence St, Back Bay in Boston</p>
+                <p>Our hours of operations are as below:</p>
+                <ul>
+                    <li>Mon-Fri: 4 PM - 11 PM</li>
+                    <li>Sat: 5 PM - 2 AM</li>
+                    <li>Sun: 5 PM - 12 AM</li>
+                </ul>
+                <p>Place an order online today!</p>
+            </div>
+            <div class="main-image">
+                <img src="{{ image }}" alt="Inside of Restaurant" /> <!-- Image of the restaurant -->
+            </div>
+        </div>
+        {% endblock %}
+    </body>
+</html>

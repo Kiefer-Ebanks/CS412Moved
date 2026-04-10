@@ -1,0 +1,54 @@
+# Dependencies (npm installs tens of thousands of files)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# Django / local data
+*.sqlite3
+db.sqlite3
+django/db.sqlite3
+django/media/
+
+# Django collected static (if you run collectstatic locally)
+django/staticfiles/
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+
+# Native build artifacts (if you prebuild)
+android/.gradle/
+android/app/build/
+android/build/
+ios/Pods/
+ios/build/
+*.apk
+*.aab
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+
+# Tooling caches
+.turbo/
+.cache/
+coverage/
+.mypy_cache/
+.pytest_cache/
+*.log

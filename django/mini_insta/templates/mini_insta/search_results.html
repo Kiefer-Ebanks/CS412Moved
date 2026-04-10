@@ -1,0 +1,81 @@
+<!-- File: search_results.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/1/2026 -->
+<!-- Description: Displays search results (Profiles and Posts). -->
+
+{% extends 'mini_insta/base.html' %}
+
+{% block content %}
+<main class="search-results-main">
+    <h1 class="search-results-title">Search results for "{{ query }}"</h1>
+
+    <div class="search-results-card">
+        <h2 class="search-results-card-title">Profiles that have the term: {{ query }}</h2>
+        {% if profiles %}
+        <div class="search-results-profiles">
+            {% for p in profiles %}
+            <a href="{% url 'show_profile' p.pk %}" class="search-results-profile-item">
+                {% if p.profile_image_url %}
+                <img src="{{ p.profile_image_url }}" alt="{{ p.display_name }}" class="search-results-profile-avatar">
+                {% else %}
+                <img src="https://alliancehealthprofessionals.com/wp-content/themes/apexclinic/images/no-image/No-Image-Found-400x264.png" alt="No image" class="search-results-profile-avatar">
+                {% endif %}
+                <span class="search-results-profile-name">{{ p.display_name }}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="search-results-empty">No matching profiles.</p>
+        {% endif %}
+    </div>
+
+    <div class="search-results-card search-results-posts-card">
+        <h2 class="search-results-card-title">All Posts that have the term: {{ query }}</h2>
+        {% if posts %}
+        <div class="search-results-posts">
+            {% for post in posts %}
+            <div class="post-container search-results-post">
+                <div class="post-header">
+                    <div class="post-profile-info">
+                        {% if post.profile.profile_image_url %}
+                        <div class="post-profile-image-container">
+                            <a href="{% url 'show_profile' post.profile.pk %}">
+                                <img src="{{ post.profile.profile_image_url }}" alt="Profile Image" class="post-profile-image">
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="post-profile-image-container">
+                            <a href="{% url 'show_profile' post.profile.pk %}">
+                                <img src="https://alliancehealthprofessionals.com/wp-content/themes/apexclinic/images/no-image/No-Image-Found-400x264.png" alt="No image" class="post-profile-image">
+                            </a>
+                        </div>
+                        {% endif %}
+                        <a href="{% url 'show_profile' post.profile.pk %}" class="post-profile-link">
+                            <p class="post-profile-name">{{ post.profile.display_name }}</p>
+                        </a>
+                    </div>
+                    <p class="post-timestamp">Posted on {{ post.timestamp }}</p>
+                </div>
+                <div class="post-caption-section">
+                    <p class="post-caption">{{ post.caption }}</p>
+                </div>
+                {% for photo in post.get_all_photos %}
+                    {% if forloop.first %}
+                    <div class="post-photo-item">
+                        <a href="{% url 'show_post' post.pk %}">
+                            <img src="{{ photo.get_image_url }}" alt="Post Photo" class="post-photo-image">
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <div class="post-feed-link-wrap">
+                    <a href="{% url 'show_post' post.pk %}" class="post-feed-link">View full post</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="search-results-empty">No matching posts.</p>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}

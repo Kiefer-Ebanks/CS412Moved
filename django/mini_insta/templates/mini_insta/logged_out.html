@@ -1,0 +1,21 @@
+<!-- File: logged_out.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/4/2026 -->
+<!-- Description: The logout page for the mini instagram app -->
+
+{% extends 'mini_insta/base.html' %}
+
+{% block content %}
+<main class="profile-edit-main">
+    <div class="profile-container">
+        <div class="profile-content">
+            <h1>Logged out</h1>
+
+            <p class="auth-message">You have been logged out.</p>
+
+            <div class="form-actions">
+                <a href="{% url 'login' %}" class="btn btn-primary">Login again</a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,308 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 60px;
+}
+
+
+
+/* Navigation Bar */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #333;
+    color: white;
+}
+
+.restaurant-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+    margin-right: 20px;
+}
+
+.nav-links li {
+    display: inline;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-links a:hover {
+    background-color: #555;
+}
+
+
+
+/* Main Page Styling */
+.main-layout {
+    display: flex;
+    gap: 40px;
+    padding: 40px;
+    align-items: flex-start;
+}
+
+.main-text {
+    flex: 1;
+    max-width: 50%;
+}
+
+.main-text h1 {
+    margin-bottom: 20px;
+}
+
+.main-text p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.main-text ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.main-image {
+    flex: 1;
+    max-width: 50%;
+}
+
+.main-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+
+/* Order Page Styling */
+.page-title {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.form-description {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.order-form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 0 40px;
+}
+
+.order-form-wrapper {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.customer-info label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.customer-info input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.menu-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+    max-width: 500px;
+}
+
+.menu-item {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.menu-item-content {
+    flex: 1;
+}
+
+.menu-item-price-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.menu-item-price-checkbox span {
+    font-weight: bold;
+    min-width: 40px;
+    text-align: right;
+}
+
+
+.filet-options {
+    display: block;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.special-instructions {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.special-instructions label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.special-instructions textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+}
+
+.submit-button {
+    padding: 12px 24px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    align-self: center;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #555;
+}
+
+
+/* Confirmation Page Styling */
+.confirmation-layout {
+    display: flex;
+    gap: 40px;
+    padding: 0 40px;
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.confirmation-layout .customer-info {
+    width: 300px;
+}
+
+.confirmation-layout .customer-info h2 {
+    margin-bottom: 15px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+.confirmation-layout .customer-info p {
+    margin-bottom: 10px;
+}
+
+.order-details {
+    flex: 1;
+    max-width: 500px;
+}
+
+.order-details p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.order-details h2 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 5px;
+}
+
+
+footer {
+    margin-top: auto;
+    text-align: center;
+    padding: 20px;
+    background-color: #333;
+    color: white;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+}
+
+footer p {
+    margin: 0;
+}
+
+
+@media (max-width: 768px) {
+    .main-layout,
+    .confirmation-layout,
+    .order-form-wrapper {
+        flex-direction: column;
+    }
+    
+    .main-text,
+    .main-image,
+    .customer-info,
+    .menu-items,
+    .order-details {
+        max-width: 100%;
+    }
+    
+    nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .nav-links {
+        margin-right: 0;
+    }
+}

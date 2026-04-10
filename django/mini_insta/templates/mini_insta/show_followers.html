@@ -1,0 +1,33 @@
+<!-- File: show_followers.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/1/2026 -->
+<!-- Description: The page that displays the followers of a profile -->
+<!-- The html template for the followers of a profile that takes in context from the views.py ShowFollowersDetailView function to display the followers -->
+
+{% extends 'mini_insta/base.html' %} <!-- linking to the base.html template-->
+
+{% block content %}
+<main class="follow-list-main">
+    <h1 class="follow-list-title">Followers of <span><a href="{% url 'show_profile' profile.pk %}" class="profile-link-heading">{{ profile.display_name }}</a></span></h1>
+    <div class="follow-list-card">
+        <div class="followers-container">
+        <!-- displaying the followers of the profile -->
+        {% for follower in profile.get_followers %}
+        <div class="follower-item">
+            <a href="{% url 'show_profile' follower.pk %}" class="follower-item-link">
+                <span class="follower-avatar">
+                    {% if follower.profile_image_url %}
+                    <img src="{{ follower.profile_image_url }}" alt="{{ follower.display_name }}" class="follower-image">
+                    {% else %}
+                    <img src="https://alliancehealthprofessionals.com/wp-content/themes/apexclinic/images/no-image/No-Image-Found-400x264.png" alt="No image" class="follower-image">
+                    {% endif %}
+                </span>
+                <span class="follower-name">{{ follower.display_name }}</span>
+            </a>
+        </div>
+        {% empty %}
+        <p>No followers yet.</p>
+        {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,357 @@
+/* Voter Analytics — shared styles */
+
+:root {
+    --va-bg: #e4e9ef;
+    --va-text: #1a2332;
+    --va-muted: #5a6675;
+    --va-accent: #2c5282;
+    --va-accent-hover: #234468;
+    --va-border: rgba(26, 35, 50, 0.12);
+    --va-font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --va-font-body: "Sora", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--va-font-body);
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--va-text);
+    background: var(--va-bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ----- Site header ----- */
+.site-header {
+    padding: 1.75rem 1.25rem 1.5rem;
+    text-align: center;
+}
+
+.site-title {
+    margin: 0 0 1rem;
+    font-family: var(--va-font-display);
+    font-size: clamp(2.15rem, 5.5vw, 3rem);
+    font-weight: 700;
+    font-optical-sizing: auto;
+    letter-spacing: -0.03em;
+    color: var(--va-text);
+}
+
+.site-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.5rem;
+}
+
+.site-nav a {
+    color: var(--va-accent);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.site-nav a:hover {
+    color: var(--va-accent-hover);
+    background: rgba(44, 82, 130, 0.1);
+}
+
+/* ----- Main layout ----- */
+.site-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 2.5rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Section titles (smaller than site title, all centered) */
+.section-title {
+    margin: 1.5rem 0 1rem;
+    font-family: var(--va-font-display);
+    font-size: clamp(1.4rem, 3.2vw, 1.75rem);
+    font-weight: 600;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+    text-align: center;
+    color: var(--va-text);
+}
+
+.search-panel .section-title {
+    margin-top: 0;
+}
+
+/* ----- Search form (horizontal fields) ----- */
+.search-panel {
+    padding: 1.25rem 1rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.search-form {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+}
+
+.search-fields {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 1rem 1.25rem;
+}
+
+.search-fields--checkboxes {
+    align-items: center;
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    gap: 0.65rem 1.25rem;
+}
+
+.search-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.search-field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--va-muted);
+    white-space: nowrap;
+}
+
+.search-field input[type="text"],
+.search-field select {
+    min-width: 7rem;
+    max-width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid var(--va-border);
+    border-radius: 6px;
+    font: inherit;
+    background: rgba(255, 255, 255, 0.35);
+    color: var(--va-text);
+}
+
+.search-field input[type="text"]:focus,
+.search-field select:focus {
+    outline: 2px solid rgba(44, 82, 130, 0.35);
+    outline-offset: 1px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.search-field--checkbox label {
+    white-space: normal;
+    max-width: 8rem;
+    line-height: 1.3;
+}
+
+.search-field--checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.search-field--checkbox label {
+    order: 2;
+    font-size: 0.75rem;
+}
+
+.search-field--checkbox input {
+    order: 1;
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--va-accent);
+}
+
+.search-field--submit {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 0.35rem;
+}
+
+.search-field--submit input[type="submit"],
+.search-field--submit button {
+    padding: 0.55rem 1.75rem;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--va-accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.search-field--submit input[type="submit"]:hover,
+.search-field--submit button:hover {
+    background: var(--va-accent-hover);
+}
+
+/* ----- Pagination ----- */
+.pagination-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin: 0.75rem 0 1.25rem;
+}
+
+.pagination-status {
+    font-weight: 500;
+    color: var(--va-muted);
+}
+
+.pagination-links {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pagination-links a {
+    color: var(--va-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pagination-links a:hover {
+    text-decoration: underline;
+}
+
+/* ----- Results table ----- */
+.results-wrap {
+    overflow-x: auto;
+    margin: 0 auto;
+}
+
+table.results-table {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.results-table th,
+.results-table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.65rem 0.5rem;
+    border-bottom: 1px solid var(--va-border);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.results-table th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--va-muted);
+    background: rgba(26, 35, 50, 0.06);
+}
+
+.results-table tbody tr:hover {
+    background: rgba(26, 35, 50, 0.04);
+}
+
+.results-table a {
+    color: var(--va-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.results-table a:hover {
+    text-decoration: underline;
+}
+
+/* ----- Graphs page ----- */
+.graph-block {
+    margin: 1.5rem auto;
+    max-width: 100%;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--va-border);
+}
+
+.graph-block:last-of-type {
+    border-bottom: none;
+}
+
+.graph-block .js-plotly-plot {
+    margin: 0 auto;
+}
+
+/* ----- Voter detail ----- */
+.voter-detail {
+    padding: 1.25rem 1.5rem 1.75rem;
+}
+
+.voter-detail .back-link {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.voter-detail .back-link a {
+    color: var(--va-accent);
+    font-weight: 600;
+}
+
+.detail-address {
+    text-align: center;
+    margin-bottom: 1.25rem;
+    color: var(--va-muted);
+}
+
+.detail-address a {
+    color: var(--va-accent);
+    margin-left: 0.35rem;
+}
+
+table.detail-table {
+    width: 100%;
+    max-width: 36rem;
+    margin: 0 auto;
+    border-collapse: collapse;
+}
+
+.detail-table th,
+.detail-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--va-border);
+    text-align: left;
+}
+
+.detail-table th {
+    width: 45%;
+    font-weight: 600;
+    color: var(--va-muted);
+    font-size: 0.9rem;
+}
+
+/* ----- Legacy row helper (optional) ----- */
+.row {
+    width: 100%;
+}

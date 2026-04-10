@@ -1,0 +1,48 @@
+<!-- File: login.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/4/2026 -->
+<!-- Description: The login page for the mini instagram app -->
+
+{% extends 'mini_insta/base.html' %}
+
+{% block content %}
+<main class="profile-edit-main">
+    <div class="profile-container">
+        <div class="profile-content">
+            <h1>Login</h1>
+
+            <form action="{% url 'login' %}" method="post" class="profile-edit-form">
+                {% csrf_token %}
+
+
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="error-list">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                    <div class="error-list">{{ form.password.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <input type="hidden" name="next" value="{% url 'show_all_profiles' %}">
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <a href="{% url 'create_profile' %}" class="btn btn-secondary">Create profile</a>
+                    {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {% else %}
+                    <input type="hidden" name="next" value="{% url 'show_all_profiles' %}">
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}

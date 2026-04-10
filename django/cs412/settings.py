@@ -39,11 +39,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders', # added this for the dadjokes api for browser testing
     'hw',
     'quotes',
+    'restaurant',
+    'mini_insta',
+    'voter_analytics',
+    'rest_framework', # added this for the API
+    'dadjokes', # added this for the dad jokes API
+    'rest_framework.authtoken', # added this for the mini_insta api
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', # added this for the dadjokes api for browser testing
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -133,5 +141,23 @@ import socket
 CS_DEPLOYMENT_HOSTNAME = 'cs-webapps.bu.edu'
 
 if socket.gethostname() == CS_DEPLOYMENT_HOSTNAME:
-    STATIC_URL = '/username/static/'
-    MEDIA_URL = '/username/media/'
+    STATIC_URL = '/kebanks/static/'
+    MEDIA_URL = '/kebanks/media/'
+
+
+REST_FRAMEWORK = {
+  'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+  'PAGE_SIZE': 10,
+  'DEFAULT_AUTHENTICATION_CLASSES': [
+    'rest_framework.authentication.TokenAuthentication',
+  ]
+}
+
+# Need to allow cors because without it, the dadjokes api will not work in the browser.
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r'^http://localhost:\d+$',
+        r'^http://127\.0\.0\.1:\d+$',
+    ]

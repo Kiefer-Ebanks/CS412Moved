@@ -23,4 +23,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('hw/', include('hw.urls')),
     path('quotes/', include('quotes.urls')),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) # configuring static files serving
+    path('restaurant/', include('restaurant.urls')),
+    path('mini_insta/', include('mini_insta.urls')),
+    path('voter_analytics/', include('voter_analytics.urls')),
+    path('dadjokes/', include('dadjokes.urls')),
+] 
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) # configuring static files serving
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # configuring media files serving

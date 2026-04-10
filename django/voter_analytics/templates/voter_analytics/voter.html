@@ -1,0 +1,36 @@
+<!-- File: voter.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/20/2026 -->
+<!-- Description: Detail page for an individual Voter -->
+
+{% extends 'voter_analytics/base.html' %}
+
+{% block content %}
+<div class="container voter-detail">
+    <h2 class="section-title">{{ voter.first_name }} {{ voter.last_name }}</h2>
+    <p class="back-link"><a href="{% url 'voters' %}">Back to list of all voters</a></p>
+    <p class="detail-address">
+        Their address is: {{ voter_address_for_maps }}
+        <a href="https://www.google.com/maps/search/?api=1&amp;query={{ voter_address_for_maps|urlencode }}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+    </p>
+
+    <table class="detail-table">
+        <tr><th>Voter ID</th><td>{{ voter.voter_id }}</td></tr>
+        <tr><th>First name</th><td>{{ voter.first_name }}</td></tr>
+        <tr><th>Last name</th><td>{{ voter.last_name }}</td></tr>
+        <tr><th>Street number</th><td>{{ voter.street_number }}</td></tr>
+        <tr><th>Street name</th><td>{{ voter.street_name }}</td></tr>
+        <tr><th>Apartment number</th><td>{{ voter.apartment_number|default:"" }}</td></tr>
+        <tr><th>ZIP code</th><td>{{ voter.zip_code }}</td></tr>
+        <tr><th>Date of birth</th><td>{{ voter.date_of_birth }}</td></tr>
+        <tr><th>Date of registration</th><td>{{ voter.date_of_registration }}</td></tr>
+        <tr><th>Party affiliation</th><td>{{ voter.party_affiliation }}</td></tr>
+        <tr><th>Precinct number</th><td>{{ voter.precinct_number }}</td></tr>
+        <tr><th>Voter score</th><td>{{ voter.voter_score }}</td></tr>
+        <tr><th>Voted in 2020 state election</th><td>{{ voter.v20state}}</td></tr>
+        <tr><th>Voted in 2021 town election</th><td>{{ voter.v21town }}</td></tr>
+        <tr><th>Voted in 2021 primary</th><td>{{ voter.v21primary }}</td></tr>
+        <tr><th>Voted in 2022 general</th><td>{{ voter.v22general}}</td></tr>
+        <tr><th>Voted in 2023 town election</th><td>{{ voter.v23town }}</td></tr>
+    </table>
+</div>
+{% endblock %}

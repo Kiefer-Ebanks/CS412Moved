@@ -1,0 +1,97 @@
+<!-- File: search.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/20/2026 -->
+<!-- Description: The template for searching voters -->
+<!-- The template for searching voters that will be linked to base.html and displayed at the url /search -->
+
+<section class="search-panel" aria-labelledby="search-form-heading">
+    <h2 id="search-form-heading" class="section-title">Search Form</h2>
+
+    <form class="search-form" action="{% if search_form_action %}{{ search_form_action }}{% else %}{% url 'voters' %}{% endif %}" method="get">
+        <div class="search-fields search-fields--primary">
+            <div class="search-field">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" value="{{ form_values.first_name|default:'' }}" autocomplete="given-name">
+            </div>
+
+            <div class="search-field">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" value="{{ form_values.last_name|default:'' }}" autocomplete="family-name">
+            </div>
+
+            <div class="search-field">
+                <label for="party_affiliation">Party Affiliation</label>
+                <select id="party_affiliation" name="party_affiliation">
+                    <option value="" {% if not form_values.party_affiliation %}selected{% endif %}>Any</option>
+                    <option value="U" {% if form_values.party_affiliation == 'U' %}selected{% endif %}>U</option>
+                    <option value="D" {% if form_values.party_affiliation == 'D' %}selected{% endif %}>D</option>
+                    <option value="R" {% if form_values.party_affiliation == 'R' %}selected{% endif %}>R</option>
+                    <option value="CC" {% if form_values.party_affiliation == 'CC' %}selected{% endif %}>CC</option>
+                    <option value="L" {% if form_values.party_affiliation == 'L' %}selected{% endif %}>L</option>
+                </select>
+            </div>
+
+            <div class="search-field">
+                <label for="dob_min_year">Min DOB Year</label>
+                <select id="dob_min_year" name="dob_min_year">
+                    <option value="" {% if not form_values.dob_min_year %}selected{% endif %}>Any</option>
+                    {% for year in year_choices %}
+                        <option value="{{ year }}" {% if form_values.dob_min_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="search-field">
+                <label for="dob_max_year">Max DOB Year</label>
+                <select id="dob_max_year" name="dob_max_year">
+                    <option value="" {% if not form_values.dob_max_year %}selected{% endif %}>Any</option>
+                    {% for year in year_choices %}
+                        <option value="{{ year }}" {% if form_values.dob_max_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="search-field">
+                <label for="voter_score">Voter Score</label>
+                <select id="voter_score" name="voter_score">
+                    <option value="" {% if not form_values.voter_score %}selected{% endif %}>Any</option>
+                    <option value="1" {% if form_values.voter_score == '1' %}selected{% endif %}>1</option>
+                    <option value="2" {% if form_values.voter_score == '2' %}selected{% endif %}>2</option>
+                    <option value="3" {% if form_values.voter_score == '3' %}selected{% endif %}>3</option>
+                    <option value="4" {% if form_values.voter_score == '4' %}selected{% endif %}>4</option>
+                    <option value="5" {% if form_values.voter_score == '5' %}selected{% endif %}>5</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="search-fields search-fields--checkboxes" role="group" aria-label="Voting history filters">
+            <div class="search-field search-field--checkbox">
+                <input type="checkbox" id="voted_in_v20state" name="voted_in_v20state" value="true" {% if form_values.voted_in_v20state == "true" %}checked{% endif %}>
+                <label for="voted_in_v20state">Voted in v20state</label>
+            </div>
+
+            <div class="search-field search-field--checkbox">
+                <input type="checkbox" id="voted_in_v21town" name="voted_in_v21town" value="true" {% if form_values.voted_in_v21town == "true" %}checked{% endif %}>
+                <label for="voted_in_v21town">Voted in v21town</label>
+            </div>
+
+            <div class="search-field search-field--checkbox">
+                <input type="checkbox" id="voted_in_v21primary" name="voted_in_v21primary" value="true" {% if form_values.voted_in_v21primary == "true" %}checked{% endif %}>
+                <label for="voted_in_v21primary">Voted in v21primary</label>
+            </div>
+
+            <div class="search-field search-field--checkbox">
+                <input type="checkbox" id="voted_in_v22general" name="voted_in_v22general" value="true" {% if form_values.voted_in_v22general == "true" %}checked{% endif %}>
+                <label for="voted_in_v22general">Voted in v22general</label>
+            </div>
+
+            <div class="search-field search-field--checkbox">
+                <input type="checkbox" id="voted_in_v23town" name="voted_in_v23town" value="true" {% if form_values.voted_in_v23town == "true" %}checked{% endif %}>
+                <label for="voted_in_v23town">Voted in v23town</label>
+            </div>
+        </div>
+
+        <div class="search-field search-field--submit">
+            <input type="submit" value="Search">
+        </div>
+    </form>
+</section>

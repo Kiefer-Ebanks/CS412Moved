@@ -1,0 +1,27 @@
+<!-- File: delete_post_form.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 2/26/2026 -->
+<!-- Description: The form template for deleting a post -->
+<!-- The html template for the form to delete a post that takes in context from the views.py DeletePostView function to delete the post -->
+
+{% extends 'mini_insta/base.html' %} <!-- linking to the base.html template-->
+
+{% block content %}
+<main>
+    <div class="post-container post-form-container">
+        <h1>Delete Post</h1>
+        <p>Are you sure you want to delete this post?</p>
+
+        <form method="POST" class="post-form">
+            {% csrf_token %}
+
+            <div class="post-form-actions">
+                <button type="submit" class="btn btn-primary">Delete Post</button>
+            </div>
+        </form>
+
+        <form action="{% url 'show_profile' post.profile.pk %}" method="GET" class="post-form">
+            <button type="submit" class="btn btn-secondary">Cancel</button>
+        </form>
+    </div>
+</main>
+{% endblock %}

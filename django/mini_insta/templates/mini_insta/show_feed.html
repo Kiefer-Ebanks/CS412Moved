@@ -1,0 +1,86 @@
+<!-- File: show_feed.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 3/1/2026 -->
+<!-- Description: The page that displays the post feed for a profile (posts from profiles they follow) -->
+
+{% extends 'mini_insta/base.html' %}
+
+{% block content %}
+<main>
+    <h1 class="feed-title"><a href="{% url 'show_profile' profile.pk %}" class="feed-title-link">{{ profile.display_name }}</a>'s feed</h1>
+
+    {% for post in post_feed %}
+    <div class="post-container">
+        <div class="post-header">
+            <div class="post-profile-info">
+                {% if post.profile.profile_image_url %}
+                <div class="post-profile-image-container">
+                    <a href="{% url 'show_profile' post.profile.pk %}">
+                        <img src="{{ post.profile.profile_image_url }}" alt="Profile Image" class="post-profile-image">
+                    </a>
+                </div>
+                {% else %}
+                <div class="post-profile-image-container">
+                    <a href="{% url 'show_profile' post.profile.pk %}">
+                        <img src="https://alliancehealthprofessionals.com/wp-content/themes/apexclinic/images/no-image/No-Image-Found-400x264.png" alt="No image" class="post-profile-image">
+                    </a>
+                </div>
+                {% endif %}
+                <a href="{% url 'show_profile' post.profile.pk %}" class="post-profile-link">
+                    <p class="post-profile-name">{{ post.profile.display_name }}</p>
+                </a>
+            </div>
+            <p class="post-timestamp">Posted on {{ post.timestamp }}</p>
+        </div>
+
+        <div class="post-caption-section">
+            <p class="post-caption">{{ post.caption }}</p>
+        </div>
+
+        {% for photo in post.get_all_photos %}
+            {% if forloop.first %}
+            <div class="post-photo-item">
+                <a href="{% url 'show_post' post.pk %}">
+                    <img src="{{ photo.get_image_url }}" alt="Post Photo" class="post-photo-image">
+                </a>
+            </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="post-feed-link-wrap">
+            <a href="{% url 'show_post' post.pk %}" class="post-feed-link">View full post</a>
+        </div>
+
+        <div class="post-likes-section">
+            {% with total_likes=post.get_likes.count %}
+            {% if total_likes > 0 %}
+            <p class="post-like-text">
+                Liked by
+                {% if total_likes > 3 %}
+                    {% for like in post.get_likes %}
+                        {% if forloop.first %}
+                        <a href="{% url 'show_profile' like.profile.pk %}">{{ like.profile.display_name }}</a> and {{ total_likes|add:"-1" }} others
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {% for like in post.get_likes %}
+                        <a href="{% url 'show_profile' like.profile.pk %}">{{ like.profile.display_name }}</a>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </p>
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="post-comments-section">
+            {% for comment in post.get_all_comments %}
+            <div class="post-comment-item">
+                <p class="post-comment-text"><a href="{% url 'show_profile' comment.profile.pk %}">{{ comment.profile.display_name }}</a>  {{ comment.text }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="feed-empty">No posts in your feed yet. Follow some profiles to see their posts here.</p>
+    {% endfor %}
+</main>
+{% endblock %}

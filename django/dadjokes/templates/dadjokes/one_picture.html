@@ -1,0 +1,19 @@
+<!-- File: one_picture.html -->
+<!-- Author: Kiefer Ebanks (kebanks@bu.edu), 4/2/2026 -->
+<!-- Description: The page that displays a single picture -->
+<!-- The html template that takes in context from the views.py one_picture function and 
+links to base.html to display the single picture -->
+
+{% extends 'dadjokes/base.html' %} <!-- linking to the base.html template-->
+
+<html>
+    <head>
+        <title>One Picture</title>
+    </head>
+    <body>
+        {% block content %} <!-- creating the information that will be subsituted in the base.html template-->
+        <h1>Here's a picture for you:</h1>
+        <img src="{{ picture.image_url }}" alt="{{ picture.image_url }}">
+        {% endblock %}
+    </body>
+</html>
