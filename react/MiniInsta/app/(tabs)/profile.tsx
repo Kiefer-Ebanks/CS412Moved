@@ -16,24 +16,41 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 const API_BASE = 'https://cs-webapps.bu.edu/kebanks/mini_insta';
 
 // The Profile's pk in Django
-const PROFILE_ID = 1;
+const PROFILE_ID = 1; // hardcoded for testing
 
 /** Shape of one profile from the ProfileSerializer */
 type ProfileFromApi = {
   id: number;
   username: string;
   display_name: string;
-  profile_image_url: string;
-  bio_text: string;
+  // both profile_image_url and bio_text can be left null by a user when creating their profile 
+  // so we need to allow them to be null here when we get profile data from the api
+  profile_image_url: string | null;
+  bio_text: string | null; 
   join_date: string;
 };
+
+// Formats API date strings into a human-friendly date
+function formatJoinDate(rawDate: string): string {
+  const parsedDate = new Date(rawDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return rawDate;
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(parsedDate);
+}
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<ProfileFromApi | null>(null); // The profile data from the API
   const [loading, setLoading] = useState(true); // Whether the profile is loading
   const [error, setError] = useState<string | null>(null); // The error message if the profile fails to load
 
-  // Sends a GET request to the API to fetch the profile
+  // fetchProfile sends a GET request to the API to fetch the profile
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -41,7 +58,6 @@ export default function ProfileScreen() {
     // creates the URL to send the GET request to .../api/profiles/<pk>/
     const url = `${API_BASE}/api/profiles/${PROFILE_ID}/`;
 
-    console.log('[Profile] GET request URL:', url);
 
     try {
       // sends the GET request to the API
@@ -53,16 +69,14 @@ export default function ProfileScreen() {
         },
       });
 
-      console.log('[Profile] Response HTTP status:', response.status);
-
-      const responseText = await response.text();
-      console.log('[Profile] Response body (preview):', responseText.slice(0, 400));
-
       if (!response.ok) {
         throw new Error(`Profile request failed (${response.status})`);
       }
 
-      const data = JSON.parse(responseText) as ProfileFromApi; // parses the response text into a ProfileFromApi object
+      // stores the response data into a ProfileFromApi object
+      const data = (await response.json()) as ProfileFromApi;
+
+      // Stores the profile object in React state
       setProfile(data);
 
     } catch (e) {
@@ -98,22 +112,27 @@ export default function ProfileScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" /> // shows a loading indicator and a message while the profile is loading
+          {/* Shows a loading spinner and message while we fetch profile data. */}
+          <ActivityIndicator size="large" />
           <ThemedText style={styles.hint}>Loading profile…</ThemedText>
         </View>
       ) : error ? (
         <View style={styles.centered}>
           <ThemedText type="subtitle">Could not load profile</ThemedText>
           <ThemedText style={styles.errorBody}>{error}</ThemedText>
-          <Pressable style={styles.retry} onPress={() => void fetchProfile()}> // allows the user to retry the request
+          
+          {/* Allows the user to retry if the API request fails. */}
+          <Pressable style={styles.retry} onPress={() => void fetchProfile()}>
             <ThemedText type="defaultSemiBold">Retry</ThemedText>
           </Pressable>
         </View>
       ) : profile ? (
         <>
+
+          {/* Renders a profile picture only when one exists in the API response. */}
           {profile.profile_image_url ? (
             <Image
-              source={{ uri: profile.profile_image_url }} // displays the profile picture
+              source={{ uri: profile.profile_image_url }}
               style={styles.avatar}
               accessibilityLabel="Profile picture"
             />
@@ -121,7 +140,7 @@ export default function ProfileScreen() {
           <ThemedText type="subtitle">{profile.display_name}</ThemedText>
           <ThemedText>@{profile.username}</ThemedText>
           <ThemedText style={styles.bio}>{profile.bio_text || 'No bio yet.'}</ThemedText>
-          <ThemedText style={styles.meta}>Joined {profile.join_date}</ThemedText>
+          <ThemedText style={styles.meta}>Joined {formatJoinDate(profile.join_date)}</ThemedText>
         </>
       ) : null}
     </ParallaxScrollView>
