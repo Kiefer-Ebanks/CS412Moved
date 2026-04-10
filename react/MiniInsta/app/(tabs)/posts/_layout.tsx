@@ -1,9 +1,9 @@
-// Stack inside tabs so post detail gets a header and back navigation
+// Stack for post detail only. headerShown: false avoids a second “back” (native header) fighting goBack() / your in-screen button.
 import { Stack } from 'expo-router';
 
 export default function PostsStackLayout() {
   return (
-    <Stack screenOptions={{ headerShown: true, title: 'Post' }}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="[id]" />
     </Stack>
   );

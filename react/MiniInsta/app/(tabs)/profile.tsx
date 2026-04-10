@@ -267,7 +267,7 @@ export default function ProfileScreen() {
             return (
               <Pressable
                 key={post.id}
-                onPress={() => router.push(`/posts/${post.id}`)}
+                onPress={() => router.replace(`/posts/${post.id}`)}
                 style={styles.postCard}>
                 <ThemedText type="subtitle">{post.caption}</ThemedText>
                 {thumbUri ? (
