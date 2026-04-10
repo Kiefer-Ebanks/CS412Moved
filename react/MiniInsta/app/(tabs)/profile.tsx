@@ -11,6 +11,7 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useRouter } from 'expo-router'; // used to navigate to the post detail screen
 
 // The base URL for the API
 const API_BASE = 'https://cs-webapps.bu.edu/kebanks/mini_insta';
@@ -105,6 +106,8 @@ function postsFromResponse(payload: unknown): PostFromApi[] {
 
 
 export default function ProfileScreen() {
+  const router = useRouter();
+
   const [profile, setProfile] = useState<ProfileFromApi | null>(null); // The profile data from the API
   const [loading, setLoading] = useState(true); // Whether the profile is loading
   const [error, setError] = useState<string | null>(null); // The error message if the profile fails to load
@@ -258,11 +261,14 @@ export default function ProfileScreen() {
       </View>
       ) : posts.length > 0 ? (
         <View>
-          {posts.map((post) => { // maps over the posts and shows the first photo for each post
+          {posts.map((post) => {
             const firstPhotoUrl = post.images?.[0]?.image;
-            const thumbUri = toAbsoluteImageUrl(firstPhotoUrl ?? null); // converts the first photo url to a full https uri for the Image component
+            const thumbUri = toAbsoluteImageUrl(firstPhotoUrl ?? null);
             return (
-              <View key={post.id} style={styles.postCard}>
+              <Pressable
+                key={post.id}
+                onPress={() => router.push(`/posts/${post.id}`)}
+                style={styles.postCard}>
                 <ThemedText type="subtitle">{post.caption}</ThemedText>
                 {thumbUri ? (
                   <Image
@@ -272,8 +278,8 @@ export default function ProfileScreen() {
                     accessibilityLabel="Post photo"
                   />
                 ) : null}
-                <ThemedText>{post.timestamp}</ThemedText>
-              </View>
+                <ThemedText>{formatJoinDate(post.timestamp)}</ThemedText>
+              </Pressable>
             );
           })}
         </View>
