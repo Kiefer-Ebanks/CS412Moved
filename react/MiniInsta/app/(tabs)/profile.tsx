@@ -45,10 +45,29 @@ function formatJoinDate(rawDate: string): string {
   }).format(parsedDate);
 }
 
+/** Shape of one post from the PostSerializer */
+type PostFromApi = {
+  id: number;
+  profile: number;
+  caption: string;
+  timestamp: string;
+  images: Array<{ // array of photo objects
+    id: number;
+    post: number;
+    image: string;
+  }>;
+};
+
+
+
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<ProfileFromApi | null>(null); // The profile data from the API
   const [loading, setLoading] = useState(true); // Whether the profile is loading
   const [error, setError] = useState<string | null>(null); // The error message if the profile fails to load
+
+  const [posts, setPosts] = useState<PostFromApi[]>([]); // state for the posts data from the API
+  const [postsLoading, setPostsLoading] = useState(true); // state for whether the posts are loading
+  const [postsError, setPostsError] = useState<string | null>(null); // error state if the posts don't load
 
   // fetchProfile sends a GET request to the API to fetch the profile
   const fetchProfile = useCallback(async () => {
@@ -89,9 +108,42 @@ export default function ProfileScreen() {
     }
   }, []);
 
-  useEffect(() => { // fetches the profile when the page loads
+  // fetchPosts sends a GET request to the API endpoint /api/profiles/<pk>/posts/ to fetch the posts for the profile
+  const fetchPosts = useCallback(async () => {
+    setPostsLoading(true);
+    setPostsError(null);
+
+    const url = `${API_BASE}/api/profiles/${PROFILE_ID}/posts/`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Posts request failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as PostFromApi[];
+      setPosts(data);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Something went wrong';
+      setPostsError(message);
+      setPosts([]); // empty array if the posts don't load
+      console.log('[Posts] Error:', message);
+    } finally {
+      setPostsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { // fetches the profile and posts when the page loads
     void fetchProfile();
-  }, [fetchProfile]);
+    void fetchPosts();
+  }, [fetchProfile, fetchPosts]);
 
   return (
     <ParallaxScrollView
@@ -143,6 +195,33 @@ export default function ProfileScreen() {
           <ThemedText style={styles.meta}>Joined {formatJoinDate(profile.join_date)}</ThemedText>
         </>
       ) : null}
+
+
+      {/* similar loading and error handling and syle to the profile when showing posts*/}
+      {postsLoading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" />
+          <ThemedText style={styles.hint}>Loading posts…</ThemedText>
+        </View>
+      ) : postsError ? (
+        <View style={styles.centered}>
+        <ThemedText type="subtitle">Could not load posts</ThemedText>
+        <ThemedText style={styles.errorBody}>{postsError}</ThemedText>
+        <Pressable style={styles.retry} onPress={() => void fetchPosts()}>
+          <ThemedText type="defaultSemiBold">Retry</ThemedText>
+        </Pressable>
+      </View>
+      ) : posts.length > 0 ? (
+        <View>
+          {posts.map((post) => (
+            <View key={post.id}>
+              <ThemedText type="subtitle">{post.caption}</ThemedText> {/* creating the caption as a subtitle*/}
+              <ThemedText>{post.timestamp}</ThemedText>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
     </ParallaxScrollView>
   );
 }
