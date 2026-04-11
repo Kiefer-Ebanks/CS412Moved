@@ -2,6 +2,8 @@
 // Author: Kiefer Ebanks (kebanks@bu.edu), 4/10/2026
 // Description: Load and show one post by URL id via GET /api/posts/<id>/
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Image } from 'expo-image';
@@ -19,6 +21,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const API_BASE = 'https://cs-webapps.bu.edu/kebanks/mini_insta';
 const API_ORIGIN = new URL(API_BASE).origin;
+const KEY_TOKEN = 'mini_insta_token';
+
+// Same token header pattern as profile/feed so this GET works when the API checks auth
+function buildAuthHeaders(token: string | null, extra?: Record<string, string>): Record<string, string> {
+  const h: Record<string, string> = { Accept: 'application/json', ...extra };
+  if (token) {
+    h.Authorization = `Token ${token}`;
+  }
+  return h;
+}
 
 function toAbsoluteImageUrl(url: string | null | undefined): string | null {
   if (url == null) {
@@ -42,10 +54,28 @@ type PostDetail = {
   profile: number;
   caption: string;
   timestamp: string;
-  images: Array<{ id: number; post: number; image: string }>;
+  images: { id: number; post: number; image: string }[];
 };
 
 export default function PostDetailScreen() {
+  const [token, setToken] = useState<string | null>(null);
+
+  // Post detail only needs the token string for Authorization on fetchPost
+  const loadToken = useCallback(async () => {
+    const t = await AsyncStorage.getItem(KEY_TOKEN);
+    setToken(t);
+  }, []);
+
+  useEffect(() => {
+    void loadToken();
+  }, [loadToken]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadToken();
+    }, [loadToken]),
+  );
+
   // The route to this file is posts/[id].tsx. This function reads the 7 from /posts/7 so we can call the API
   const { id: idParam } = useLocalSearchParams<{ id: string | string[] }>();
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
@@ -72,10 +102,7 @@ export default function PostDetailScreen() {
     try {
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers: buildAuthHeaders(token),
       });
 
       if (!response.ok) {
@@ -91,13 +118,13 @@ export default function PostDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, token]);
 
   useEffect(() => {
     void fetchPost();
   }, [fetchPost]);
 
-  // Navigate switches back to the profile tab explicitly
+  // Leave post screen and land on the profile tab (works even if stack history is messy)
   const leavePost = useCallback(() => {
     router.navigate('/profile');
   }, []);

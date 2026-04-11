@@ -1,104 +1,227 @@
+// Feed tab — GET /api/profiles/<profile_id>/feed/
+
+import { styles } from '@/assets/mini_insta_styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-// The base URL for the API
 const API_BASE = 'https://cs-webapps.bu.edu/kebanks/mini_insta';
+const API_ORIGIN = new URL(API_BASE).origin;
+// Same storage keys as login — feed is for whichever user last stored token + profile id
+const KEY_TOKEN = 'mini_insta_token';
+const KEY_PROFILE_ID = 'mini_insta_profile_id';
 
-// The Profile's pk in Django
-const PROFILE_ID = 1;
+// Match profile tab: send the session token on feed GETs when the endpoint requires auth
+function buildAuthHeaders(token: string | null, extra?: Record<string, string>): Record<string, string> {
+  const h: Record<string, string> = { Accept: 'application/json', ...extra };
+  if (token) {
+    h.Authorization = `Token ${token}`;
+  }
+  return h;
+}
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+function toAbsoluteImageUrl(url: string | null | undefined): string | null {
+  if (url == null) return null;
+  const u = String(url).trim();
+  if (!u) return null;
+  if (u.startsWith('//')) return `https:${u}`;
+  if (u.startsWith('/')) return `${API_ORIGIN}${u}`;
+  return u;
+}
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+function formatJoinDate(rawDate: string): string {
+  const parsedDate = new Date(rawDate);
+  if (Number.isNaN(parsedDate.getTime())) return rawDate;
+  return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(
+    parsedDate,
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+type PostFromApi = {
+  id: number;
+  profile: number;
+  caption: string;
+  timestamp: string;
+  author_display_name?: string;
+  author_username?: string;
+  images: { id: number; post: number; image: string }[];
+};
+
+type PaginatedPostsResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PostFromApi[];
+};
+
+function postsFromResponse(payload: unknown): PostFromApi[] {
+  if (Array.isArray(payload)) return payload as PostFromApi[];
+  if (
+    payload !== null &&
+    typeof payload === 'object' &&
+    'results' in payload &&
+    Array.isArray((payload as PaginatedPostsResponse).results)
+  ) {
+    return (payload as PaginatedPostsResponse).results;
+  }
+  return [];
+}
+
+// One line of “who posted” using serializer fields when present, else the profile fk
+function authorLine(post: PostFromApi): string {
+  return (
+    post.author_display_name ||
+    post.author_username ||
+    (post.profile != null ? `Profile #${post.profile}` : 'Unknown')
+  );
+}
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const scrollContentStyle = [styles.pageScrollContent, { paddingTop: insets.top + 12 }];
+
+  const [token, setToken] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<number | null>(null);
+  const [ready, setReady] = useState(false);
+
+  const [feedPosts, setFeedPosts] = useState<PostFromApi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load token + profile id so the feed URL uses the logged-in viewer’s pk
+  const loadAuthFromStorage = useCallback(async () => {
+    try {
+      const [t, idStr] = await Promise.all([
+        AsyncStorage.getItem(KEY_TOKEN),
+        AsyncStorage.getItem(KEY_PROFILE_ID),
+      ]);
+      setToken(t);
+      setProfileId(idStr ? Number(idStr) : null);
+    } finally {
+      setReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAuthFromStorage();
+  }, [loadAuthFromStorage]);
+
+  // Refresh auth when coming back to this tab (e.g. after login) without restarting the app
+  useFocusEffect(
+    useCallback(() => {
+      void loadAuthFromStorage();
+    }, [loadAuthFromStorage]),
+  );
+
+  // GET …/profiles/<id>/feed/ — no request until we know which profile’s following list to use
+  const fetchFeed = useCallback(async () => {
+    if (profileId == null) {
+      setFeedPosts([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/profiles/${profileId}/feed/`, {
+        headers: buildAuthHeaders(token),
+      });
+      if (!response.ok) throw new Error(`Feed request failed (${response.status})`);
+      const body = (await response.json()) as unknown;
+      setFeedPosts(postsFromResponse(body));
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Something went wrong';
+      setError(message);
+      setFeedPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [profileId, token]);
+
+  useEffect(() => {
+    if (!ready) return;
+    void fetchFeed();
+  }, [ready, fetchFeed]);
+
+  if (!ready) {
+    return (
+      <View style={styles.pageRoot}>
+        <View style={[styles.centered, { paddingTop: insets.top }]}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.hint}>Loading…</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (profileId == null || !token) {
+    return (
+      <View style={styles.pageRoot}>
+        <ScrollView contentContainerStyle={scrollContentStyle}>
+          <Text style={styles.screenTitle}>Feed</Text>
+          <Text style={styles.sectionHint}>Sign in to see your feed.</Text>
+          <Pressable style={styles.retry} onPress={() => router.push('/login')}>
+            <Text style={styles.buttonLabel}>Sign in</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.pageRoot}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={scrollContentStyle}>
+        <Text style={styles.screenTitle}>Feed</Text>
+        <Text style={styles.sectionHint}>Posts from people you follow.</Text>
+
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" />
+            <Text style={styles.hint}>Loading feed…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centered}>
+            <Text style={styles.textSubtitle}>Could not load feed</Text>
+            <Text style={styles.errorBody}>{error}</Text>
+            <Pressable style={styles.retry} onPress={() => void fetchFeed()}>
+              <Text style={styles.buttonLabel}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : feedPosts.length === 0 ? (
+          <View style={styles.centered}>
+            <Text style={styles.hint}>No posts in your feed yet. Follow profiles or add posts.</Text>
+          </View>
+        ) : (
+          <View>
+            {feedPosts.map((post) => {
+              const thumbnailUri = toAbsoluteImageUrl(post.images?.[0]?.image ?? null);
+              return (
+                <Pressable
+                  key={post.id}
+                  onPress={() => router.push(`/post/${post.id}`)}
+                  style={styles.feedPostCard}>
+                  <Text style={styles.feedAuthorTitle}>{authorLine(post)}</Text>
+                  {thumbnailUri ? (
+                    <Image
+                      source={{ uri: thumbnailUri }}
+                      style={styles.feedImage}
+                      contentFit="cover"
+                      accessibilityLabel="Post photo"
+                    />
+                  ) : null}
+                  <Text style={styles.feedCaptionLine}>{post.caption}</Text>
+                  <Text style={styles.feedDateUnderImage}>{formatJoinDate(post.timestamp)}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+}

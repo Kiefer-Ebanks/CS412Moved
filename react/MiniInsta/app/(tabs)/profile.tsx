@@ -1,86 +1,76 @@
-// File: profile.tsx
-// Author: Kiefer Ebanks (kebanks@bu.edu), 4/10/2026
-// Description: Load and show one profile from the MiniInsta Django REST API (GET api/profiles/<pk>/)
+// Profile tab — logged-in user from AsyncStorage; profile + posts + new post.
 
-import { styles } from '@/assets/mini_insta_styles';
+import { colors, styles } from '@/assets/mini_insta_styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useRouter } from 'expo-router'; // used to navigate to the post detail screen
-
-// The base URL for the API
 const API_BASE = 'https://cs-webapps.bu.edu/kebanks/mini_insta';
-
-// Origin for resolving media image paths from the API
 const API_ORIGIN = new URL(API_BASE).origin;
+// AsyncStorage keys written at login so this tab can attach the token and profile id to requests
+const KEY_TOKEN = 'mini_insta_token';
+const KEY_PROFILE_ID = 'mini_insta_profile_id';
+const KEY_PROFILE_JSON = 'mini_insta_profile';
 
-// The Profile's pk in Django
-const PROFILE_ID = 1; // hardcoded for testing
-
-/** Turn media image URLs into a full https URI for Image. */
-function toAbsoluteImageUrl(url: string | null | undefined): string | null {
-  if (url == null) {
-    return null;
-  }
-  const u = String(url).trim();
-  if (!u) {
-    return null;
-  }
-  if (u.startsWith('//')) {
-    return `https:${u}`;
-  }
-  if (u.startsWith('/')) {
-    return `${API_ORIGIN}${u}`;
-  }
-  return u;
-}
-
-/** Shape of one profile from the ProfileSerializer */
 type ProfileFromApi = {
   id: number;
   username: string;
   display_name: string;
-  // both profile_image_url and bio_text can be left null by a user when creating their profile 
-  // so we need to allow them to be null here when we get profile data from the api
   profile_image_url: string | null;
-  bio_text: string | null; 
+  bio_text: string | null;
   join_date: string;
 };
 
-// Formats API date strings into a human-friendly date
-function formatJoinDate(rawDate: string): string {
-  const parsedDate = new Date(rawDate);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return rawDate;
+// Builds fetch headers since Django REST expects Authorization when the view is protected
+function buildAuthHeaders(token: string | null, extra?: Record<string, string>): Record<string, string> {
+  const h: Record<string, string> = { Accept: 'application/json', ...extra };
+  if (token) {
+    h.Authorization = `Token ${token}`;
   }
-
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(parsedDate);
+  return h;
 }
 
-/** Shape of one post from the PostSerializer */
+function toAbsoluteImageUrl(url: string | null | undefined): string | null {
+  if (url == null) return null;
+  const u = String(url).trim();
+  if (!u) return null;
+  if (u.startsWith('//')) return `https:${u}`;
+  if (u.startsWith('/')) return `${API_ORIGIN}${u}`;
+  return u;
+}
+
+function formatJoinDate(rawDate: string): string {
+  const parsedDate = new Date(rawDate);
+  if (Number.isNaN(parsedDate.getTime())) return rawDate;
+  return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(
+    parsedDate,
+  );
+}
+
 type PostFromApi = {
   id: number;
   profile: number;
   caption: string;
   timestamp: string;
-  images: Array<{ // array of photo objects
-    id: number;
-    post: number;
-    image: string;
-  }>;
+  images: { id: number; post: number; image: string }[];
 };
 
-/** Django REST Framework page-number pagination wraps lists in { results: [...] } */
 type PaginatedPostsResponse = {
   count: number;
   next: string | null;
@@ -89,202 +79,397 @@ type PaginatedPostsResponse = {
 };
 
 function postsFromResponse(payload: unknown): PostFromApi[] {
-  if (Array.isArray(payload)) { // if the payload is an array, return it as a PostFromApi array
-    return payload as PostFromApi[];
-  }
-  if ( // if the payload is not null, an object, has a results key, and the results key is an array, return the results as a PostFromApi array
-    payload !== null &&  // if the payload is not null,
-    typeof payload === 'object' && // checks if the payload is an object
-    'results' in payload && // checks if the payload has a results key
-    Array.isArray((payload as PaginatedPostsResponse).results) // checks if the results key is an array
+  if (Array.isArray(payload)) return payload as PostFromApi[];
+  if (
+    payload !== null &&
+    typeof payload === 'object' &&
+    'results' in payload &&
+    Array.isArray((payload as PaginatedPostsResponse).results)
   ) {
-    return (payload as PaginatedPostsResponse).results; // then it returns the results as a PostFromApi array
+    return (payload as PaginatedPostsResponse).results;
   }
   return [];
 }
 
-
-
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const scrollContentStyle = [styles.pageScrollContent, { paddingTop: insets.top + 12 }];
 
-  const [profile, setProfile] = useState<ProfileFromApi | null>(null); // The profile data from the API
-  const [loading, setLoading] = useState(true); // Whether the profile is loading
-  const [error, setError] = useState<string | null>(null); // The error message if the profile fails to load
+  const [token, setToken] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<number | null>(null);
+  const [ready, setReady] = useState(false);
 
-  const [posts, setPosts] = useState<PostFromApi[]>([]); // state for the posts data from the API
-  const [postsLoading, setPostsLoading] = useState(true); // state for whether the posts are loading
-  const [postsError, setPostsError] = useState<string | null>(null); // error state if the posts don't load
+  const [profile, setProfile] = useState<ProfileFromApi | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // fetchProfile sends a GET request to the API to fetch the profile
+  const [posts, setPosts] = useState<PostFromApi[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [postsError, setPostsError] = useState<string | null>(null);
+
+  const [postModal, setPostModal] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [pickedUris, setPickedUris] = useState<string[]>([]);
+  const [postBusy, setPostBusy] = useState(false);
+
+  // Reads token + profile id from disk so fetchProfile/fetchPosts know which user we are
+  const loadAuthFromStorage = useCallback(async () => {
+    try {
+      const [t, idStr] = await Promise.all([
+        AsyncStorage.getItem(KEY_TOKEN),
+        AsyncStorage.getItem(KEY_PROFILE_ID),
+      ]);
+      setToken(t);
+      setProfileId(idStr ? Number(idStr) : null);
+    } finally {
+      setReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAuthFromStorage();
+  }, [loadAuthFromStorage]);
+
+  // Run again when the tab gains focus so a fresh login from the login screen is picked up here
+  useFocusEffect(
+    useCallback(() => {
+      void loadAuthFromStorage();
+    }, [loadAuthFromStorage]),
+  );
+
   const fetchProfile = useCallback(async () => {
+    if (profileId == null) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
-
-    // creates the URL to send the GET request to .../api/profiles/<pk>/
-    const url = `${API_BASE}/api/profiles/${PROFILE_ID}/`;
-
-
     try {
-      // sends the GET request to the API
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(`${API_BASE}/api/profiles/${profileId}/`, {
+        headers: buildAuthHeaders(token),
       });
-
-      if (!response.ok) {
-        throw new Error(`Profile request failed (${response.status})`);
-      }
-
-      // stores the response data into a ProfileFromApi object
-      const data = (await response.json()) as ProfileFromApi;
-
-      // Stores the profile object in React state
-      setProfile(data);
-
+      if (!response.ok) throw new Error(`Profile request failed (${response.status})`);
+      setProfile((await response.json()) as ProfileFromApi);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Something went wrong';
       setError(message);
       setProfile(null);
-      console.log('[Profile] Error:', message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profileId, token]);
 
-  // fetchPosts sends a GET request to the API endpoint /api/profiles/<pk>/posts/ to fetch the posts for the profile
   const fetchPosts = useCallback(async () => {
+    if (profileId == null) {
+      setPosts([]);
+      setPostsLoading(false);
+      return;
+    }
     setPostsLoading(true);
     setPostsError(null);
-
-    const url = `${API_BASE}/api/profiles/${PROFILE_ID}/posts/`;
-
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(`${API_BASE}/api/profiles/${profileId}/posts/`, {
+        headers: buildAuthHeaders(token),
       });
-
-      if (!response.ok) {
-        throw new Error(`Posts request failed (${response.status})`);
-      }
-
-      const postsResponse = (await response.json()) as PaginatedPostsResponse;
-      setPosts(postsFromResponse(postsResponse));
+      if (!response.ok) throw new Error(`Posts request failed (${response.status})`);
+      setPosts(postsFromResponse(await response.json()));
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Something went wrong';
       setPostsError(message);
-      setPosts([]); // empty array if the posts don't load
-      console.log('[Posts] Error:', message);
+      setPosts([]);
     } finally {
       setPostsLoading(false);
     }
-  }, []);
+  }, [profileId, token]);
 
-  useEffect(() => { // fetches the profile and posts when the page loads
+  useEffect(() => {
+    if (!ready) return;
     void fetchProfile();
     void fetchPosts();
-  }, [fetchProfile, fetchPosts]);
+  }, [ready, fetchProfile, fetchPosts]);
 
-  const avatarUri = profile ? toAbsoluteImageUrl(profile.profile_image_url) : null; // converts the profile image url to a full https uri for the Image component
+  async function logout() {
+    // Wipes saved credentials so the UI drops back to the signed-out state
+    await AsyncStorage.multiRemove([KEY_TOKEN, KEY_PROFILE_ID, KEY_PROFILE_JSON]);
+    setToken(null);
+    setProfileId(null);
+    setProfile(null);
+    setPosts([]);
+  }
+
+  function openPostModal() {
+    if (!token || profileId == null) {
+      router.push('/login');
+      return;
+    }
+    setCaption('');
+    setPickedUris([]);
+    setPostModal(true);
+  }
+
+  async function pickPhoto() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Photos', 'Allow library access to attach an image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setPickedUris((prev) => [...prev, result.assets[0].uri]);
+    }
+  }
+
+  function removePickedAt(index: number) {
+    setPickedUris((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  // Appends one image to the multipart body (web uses a Blob, native uses uri + type)
+  async function appendOneFile(formData: FormData, pickedUri: string) {
+    const name = pickedUri.split('/').pop() || 'photo.jpg';
+    const ext = name.includes('.') ? name.split('.').pop()?.toLowerCase() : 'jpg';
+    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    if (Platform.OS === 'web') {
+      const blob = await (await fetch(pickedUri)).blob();
+      formData.append('files', blob, name);
+    } else {
+      formData.append('files', { uri: pickedUri, name, type: mime } as never);
+    }
+  }
+
+  async function submitPost() {
+    if (!token || profileId == null) return;
+    const c = caption.trim();
+    if (!c) {
+      Alert.alert('Caption', 'Enter a caption.');
+      return;
+    }
+    setPostBusy(true);
+    try {
+      const formData = new FormData();
+      formData.append('caption', c);
+      for (const uri of pickedUris) {
+        await appendOneFile(formData, uri);
+      }
+      const response = await fetch(`${API_BASE}/api/profiles/${profileId}/posts/`, {
+        method: 'POST',
+        headers: buildAuthHeaders(token),
+        body: formData,
+      });
+      if (!response.ok) {
+        // Try to surface Django’s error body in the alert instead of only the status code
+        const raw = await response.text();
+        let msg = `Create post failed (${response.status})`;
+        if (raw) {
+          try {
+            msg = JSON.stringify(JSON.parse(raw) as Record<string, unknown>, null, 2);
+          } catch {
+            msg = raw.slice(0, 500);
+          }
+        }
+        throw new Error(msg);
+      }
+      setPostModal(false);
+      await fetchPosts();
+    } catch (e) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Could not create post');
+    } finally {
+      setPostBusy(false);
+    }
+  }
+
+  const avatarUri = profile ? toAbsoluteImageUrl(profile.profile_image_url) : null;
+
+  if (!ready) {
+    return (
+      <View style={styles.pageRoot}>
+        <View style={[styles.centered, { paddingTop: insets.top }]}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.hint}>Loading…</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (profileId == null || !token) {
+    return (
+      <View style={styles.pageRoot}>
+        <ScrollView contentContainerStyle={scrollContentStyle}>
+          <Text style={styles.screenTitle}>Profile</Text>
+          <Text style={styles.sectionHint}>Sign in to view your profile and create posts.</Text>
+          <Pressable style={styles.retry} onPress={() => router.push('/login')}>
+            <Text style={styles.buttonLabel}>Sign in</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title" style={styles.profileTitle}>
-          Profile
-        </ThemedText>
-      </ThemedView>
-
-      {loading ? (
-        <View style={styles.centered}>
-          {/* Shows a loading spinner and message while we fetch profile data. */}
-          <ActivityIndicator size="large" />
-          <ThemedText style={styles.hint}>Loading profile…</ThemedText>
-        </View>
-      ) : error ? (
-        <View style={styles.centered}>
-          <ThemedText type="subtitle">Could not load profile</ThemedText>
-          <ThemedText style={styles.errorBody}>{error}</ThemedText>
-          
-          {/* Allows the user to retry if the API request fails. */}
-          <Pressable style={styles.retry} onPress={() => void fetchProfile()}>
-            <ThemedText type="defaultSemiBold">Retry</ThemedText>
+    <View style={styles.pageRoot}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={scrollContentStyle}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.screenTitle}>Profile</Text>
+          <Pressable style={styles.retry} onPress={() => void logout()}>
+            <Text style={styles.buttonLabel}>Sign out</Text>
           </Pressable>
         </View>
-      ) : profile ? (
-        <>
-          {avatarUri ? ( // if the avatar uri is not null, show the image
-            <Image
-              source={{ uri: avatarUri }}
-              style={styles.avatar}
-              accessibilityLabel="Profile picture"
+
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" />
+            <Text style={styles.hint}>Loading profile…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centered}>
+            <Text style={styles.textSubtitle}>Could not load profile</Text>
+            <Text style={styles.errorBody}>{error}</Text>
+            <Pressable style={styles.retry} onPress={() => void fetchProfile()}>
+              <Text style={styles.buttonLabel}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : profile ? (
+          <>
+            <View style={styles.profileHeaderRow}>
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  style={styles.profileAvatar}
+                  accessibilityLabel="Profile picture"
+                />
+              ) : (
+                <View style={[styles.profileAvatar, { backgroundColor: '#d1d1d6' }]} />
+              )}
+              <View style={styles.profileNamesCol}>
+                <Text style={styles.profileDisplayName}>{profile.display_name}</Text>
+                <Text style={styles.profileUsername}>@{profile.username}</Text>
+              </View>
+            </View>
+            <Text style={styles.bio}>{profile.bio_text || 'No bio yet.'}</Text>
+            <Text style={styles.meta}>Joined {formatJoinDate(profile.join_date)}</Text>
+
+            <Pressable style={[styles.retry, styles.profileMakePostCta]} onPress={openPostModal}>
+              <Text style={styles.buttonLabel}>Make a New Post</Text>
+            </Pressable>
+          </>
+        ) : null}
+
+        {postsLoading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" />
+            <Text style={styles.hint}>Loading posts…</Text>
+          </View>
+        ) : postsError ? (
+          <View style={styles.centered}>
+            <Text style={styles.textSubtitle}>Could not load posts</Text>
+            <Text style={styles.errorBody}>{postsError}</Text>
+            <Pressable style={styles.retry} onPress={() => void fetchPosts()}>
+              <Text style={styles.buttonLabel}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : posts.length > 0 ? (
+          <View>
+            {posts.map((post) => {
+              const thumbnailUri = toAbsoluteImageUrl(post.images?.[0]?.image ?? null);
+              return (
+                <Pressable
+                  key={post.id}
+                  onPress={() => router.push(`/post/${post.id}`)}
+                  style={styles.postCard}>
+                  {thumbnailUri ? (
+                    <>
+                      <Image
+                        source={{ uri: thumbnailUri }}
+                        style={styles.postImage}
+                        contentFit="cover"
+                        accessibilityLabel="Post photo"
+                      />
+                      <Text style={styles.textSubtitle}>{post.caption}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.textSubtitle}>{post.caption}</Text>
+                  )}
+                  <Text style={styles.textMeta}>{formatJoinDate(post.timestamp)}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : !postsLoading && !postsError ? (
+          <Text style={styles.hint}>No posts yet.</Text>
+        ) : null}
+      </ScrollView>
+
+      <Modal
+        visible={postModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => !postBusy && setPostModal(false)}>
+        <View style={{ flex: 1, backgroundColor: colors.card }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 16,
+              paddingTop: insets.top + 12,
+              paddingBottom: 12,
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: colors.border,
+            }}>
+            <Pressable onPress={() => !postBusy && setPostModal(false)} disabled={postBusy}>
+              <Text style={styles.buttonLabel}>Cancel</Text>
+            </Pressable>
+            <Text style={styles.textSubtitle}>New post</Text>
+            <Pressable onPress={() => void submitPost()} disabled={postBusy}>
+              {postBusy ? (
+                <ActivityIndicator />
+              ) : (
+                <Text style={styles.buttonLabel}>Post</Text>
+              )}
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={styles.pageScrollContent} keyboardShouldPersistTaps="handled">
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Caption"
+              placeholderTextColor={colors.textMuted}
+              multiline
+              value={caption}
+              onChangeText={setCaption}
             />
-          ) : null}
-          <ThemedText type="subtitle">{profile.display_name}</ThemedText>
-          <ThemedText>@{profile.username}</ThemedText>
-          <ThemedText style={styles.bio}>{profile.bio_text || 'No bio yet.'}</ThemedText>
-          <ThemedText style={styles.meta}>Joined {formatJoinDate(profile.join_date)}</ThemedText>
-        </>
-      ) : null}
-
-
-      {/* Shows the posts for the profile */}
-      {/* similar loading and error handling and syle to the profile when showing posts*/}
-      {postsLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" />
-          <ThemedText style={styles.hint}>Loading posts…</ThemedText>
+            <Pressable style={styles.retry} onPress={() => void pickPhoto()} disabled={postBusy}>
+              <Text style={styles.buttonLabel}>
+                Add photo{pickedUris.length ? ` (${pickedUris.length})` : ''}
+              </Text>
+            </Pressable>
+            {pickedUris.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbStrip}>
+                {pickedUris.map((uri, index) => (
+                  <View key={`${uri}-${index}`} style={styles.thumbWrap}>
+                    <Image
+                      source={{ uri }}
+                      style={styles.thumb}
+                      contentFit="cover"
+                      accessibilityLabel="Selected photo"
+                    />
+                    <Pressable
+                      style={styles.thumbRemove}
+                      onPress={() => removePickedAt(index)}
+                      disabled={postBusy}
+                      accessibilityLabel="Remove photo">
+                      <Text style={styles.thumbRemoveLabel}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+          </ScrollView>
         </View>
-      ) : postsError ? (
-        <View style={styles.centered}>
-        <ThemedText type="subtitle">Could not load posts</ThemedText>
-        <ThemedText style={styles.errorBody}>{postsError}</ThemedText>
-        <Pressable style={styles.retry} onPress={() => void fetchPosts()}>
-          <ThemedText type="defaultSemiBold">Retry</ThemedText>
-        </Pressable>
-      </View>
-      ) : posts.length > 0 ? (
-        <View>
-          {posts.map((post) => {
-            const firstPhotoUrl = post.images?.[0]?.image;
-            const thumbUri = toAbsoluteImageUrl(firstPhotoUrl ?? null);
-            return (
-              <Pressable
-                key={post.id}
-                onPress={() => router.replace(`/posts/${post.id}`)}
-                style={styles.postCard}>
-                <ThemedText type="subtitle">{post.caption}</ThemedText>
-                {thumbUri ? (
-                  <Image
-                    source={{ uri: thumbUri }}
-                    style={styles.postImage}
-                    contentFit="cover"
-                    accessibilityLabel="Post photo"
-                  />
-                ) : null}
-                <ThemedText>{formatJoinDate(post.timestamp)}</ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-
-    </ParallaxScrollView>
+      </Modal>
+    </View>
   );
 }
