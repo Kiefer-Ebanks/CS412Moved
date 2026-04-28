@@ -71,7 +71,6 @@ export async function login(username: string, password: string): Promise<AuthRes
  */
 export async function register(
   username: string,
-  email: string,
   password: string,
 ): Promise<AuthResponse> {
 
@@ -79,7 +78,7 @@ export async function register(
   const response = await fetch(`${API_BASE}/api/register/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: username, email: email, password: password }),
+    body: JSON.stringify({ username: username, password: password }),
   });
 
   // Parse JSON body once to get the data from the response

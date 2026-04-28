@@ -1,11 +1,11 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api";
 
 function RegisterPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,7 +16,7 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      await register(username, email, password);
+      await register(username, password);
       navigate("/ideas");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Registration failed";
@@ -39,15 +39,6 @@ function RegisterPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: 12 }}
-        />
-
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
           style={{ display: "block", width: "100%", marginBottom: 12 }}
         />
 
