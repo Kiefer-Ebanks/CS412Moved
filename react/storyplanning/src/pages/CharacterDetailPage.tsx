@@ -4,7 +4,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  clearToken,
   deleteCharacter,
   getIdea,
   getCharacter,
@@ -16,16 +15,10 @@ import {
 } from "../api";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-// shape of the from state object that we get from the location state
-type FromState = {
-  from?: string;
-};
-
 function CharacterDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as FromState | null)?.from;
 
   const [character, setCharacter] = useState<CharacterDetailResponse | null>(null);
   const [error, setError] = useState("");
@@ -86,29 +79,29 @@ function CharacterDetailPage() {
     void loadIdeaScenes();
   }, [character]);
 
-  function handleBack() {
-    // if opened from another page, go there first (for normal cross-page navigation)
-    if (from) {
-      navigate(from);
-      return;
-    }
-    // fallback path avoids returning to create form: scene first when present, otherwise idea
-    const preferredSceneId =
-      character?.scenes && character.scenes.length > 0 ? character.scenes[0] : character?.scene; // get the first scene id from the list of scene ids or the single scene id if there is only one
-    if (preferredSceneId != null) {
-      navigate(`/scenes/${preferredSceneId}`);
-      return;
-    }
-    if (character) {
-      navigate(`/ideas/${character.idea}`);
-      return;
-    }
-    navigate("/ideas");
-  }
+  useEffect(() => {
+    return () => {
+      if (descriptionMessageTimerRef.current != null) {
+        window.clearTimeout(descriptionMessageTimerRef.current);
+      }
+      if (sceneMessageTimerRef.current != null) {
+        window.clearTimeout(sceneMessageTimerRef.current);
+      }
+    };
+  }, []);
 
-  function handleLogout() {
-    clearToken();
-    navigate("/login");
+  function formatTimestamp(value: string): string {
+    // format API timestamp as Month Day, Year and hour:minute AM/PM for easier reading
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   function startTitleEdit() {
@@ -236,16 +229,6 @@ function CharacterDetailPage() {
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <button type="button" onClick={handleBack}>
-          &larr; Back
-        </button>
-      </p>
-
-      <button type="button" onClick={handleLogout}>
-        Logout
-      </button>
-
       {error ? (
         <p style={{ color: "crimson", marginTop: 16 }}>{error}</p>
       ) : null}
@@ -278,7 +261,7 @@ function CharacterDetailPage() {
             </h1>
           )}
           <p>
-            <strong>Last updated:</strong> {character.timestamp}
+            <strong>Last updated:</strong> {formatTimestamp(character.timestamp)}
           </p>
           <section style={{ marginTop: 24 }}>
             <h2>Description</h2>
@@ -315,14 +298,16 @@ function CharacterDetailPage() {
             </div>
           </section>
 
-          <section style={{ marginTop: 24 }}>
-            <h2>Affiliated scenes</h2>
-            <p style={{ marginTop: 0, color: "#555" }}>
-              Select all scenes this character belongs to, then save.
-            </p>
-            {sceneOptions.length > 0 ? (
-              <div style={{ border: "1px solid #ddd", borderRadius: 6, padding: 12 }}>
-                <div style={{ display: "grid", gap: 8 }}>
+          <section style={{ marginTop: 34 }}>
+            <fieldset style={{ border: "1px solid #777", borderRadius: 0, margin: 0, padding: 12 }}>
+              <legend style={{ padding: "0 6px", marginLeft: 6, fontSize: "1.5rem", fontWeight: 700 }}>
+                Affiliated scenes
+              </legend>
+              <p style={{ marginTop: -1, marginBottom: 12, color: "var(--text-muted)", fontSize: "1.07rem" }}>
+                Select all scenes this character belongs to, then save
+              </p>
+              {sceneOptions.length > 0 ? (
+                <div style={{ display: "grid", gap: 8, maxHeight: 220, overflowY: "auto", paddingRight: 6 }}>
                   {sceneOptions.map((scene) => (
                     <label key={scene.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <input
@@ -334,10 +319,10 @@ function CharacterDetailPage() {
                     </label>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <p>No scenes available for this idea yet.</p>
-            )}
+              ) : (
+                <p style={{ margin: 0 }}>No scenes available for this idea yet.</p>
+              )}
+            </fieldset>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
               {sceneMessage ? (
                 <span style={{ color: "green" }}>{sceneMessage}</span>
@@ -351,9 +336,9 @@ function CharacterDetailPage() {
           </section>
 
           {/* Images linked to this character in the DB (Image.character FK); same resolve helper as scene/idea pages */}
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 34 }}>
             <h2>Images for this character</h2>
-            <div style={{ marginBottom: 10, position: "relative", display: "inline-block" }}>
+            <div style={{ marginTop: 16, marginBottom: 18, position: "relative", display: "inline-block" }}>
               {/* Add image trigger toggles menu with upload vs link choices */}
               <button type="button" onClick={() => setShowAddImageMenu((v) => !v)}>
                 Add an image
@@ -413,24 +398,25 @@ function CharacterDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>No images linked to this character yet</p>
+              <p style={{ marginTop: 12 }}>No images linked to this character yet</p>
             )}
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 56 }}>
             <h2>Drawings for this character</h2>
             <p style={{ marginTop: 0, color: "#555" }}>
               Create drawings and reopen them later to continue editing.
             </p>
-            <p>
-              <strong>Create a new drawing</strong>
-              {"  "}
-              <Link
-                to={`/ideas/${character.idea}/drawings/new?characterId=${character.id}`}
-                state={{ from: `${location.pathname}${location.search}` }}>
-                &rarr;
-              </Link>
-            </p>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/ideas/${character.idea}/drawings/new?characterId=${character.id}`, {
+                  state: { from: `${location.pathname}${location.search}` },
+                })
+              }
+              style={{ marginTop: 10, marginBottom: 18 }}>
+              Create a new drawing
+            </button>
             {character.drawings && character.drawings.length > 0 ? (
               <ul style={{ listStyle: "none", padding: 0 }}>
                 {character.drawings.map((drawing) => (
@@ -454,18 +440,20 @@ function CharacterDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>No drawings linked to this character yet</p>
+              <p style={{ marginTop: 12 }}>No drawings linked to this character yet</p>
             )}
           </section>
 
-          <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
+          <section style={{ marginTop: 42, paddingTop: 24, borderTop: "1px solid #ddd" }}>
             <h2 style={{ color: "#8b0000" }}>Delete character</h2>
-            <p>This removes the character and related character data. This cannot be undone.</p>
+            <p style={{ marginTop: 10 }}>
+              This removes the character and related character data. This cannot be undone.
+            </p>
             <button
               type="button"
               onClick={() => void handleDeleteCharacter()}
               disabled={deleteBusy}
-              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              style={{ marginTop: 14, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
               {deleteBusy ? "Deleting..." : "Delete character"}
             </button>
           </section>

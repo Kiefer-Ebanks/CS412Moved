@@ -38,7 +38,8 @@ function AuthenticatedLayout() {
   const stateFrom = (location.state as { from?: string } | null)?.from;
   const showIdeaDetailBack = /^\/ideas\/\d+$/.test(location.pathname);
   const showSceneDetailBack = /^\/scenes\/\d+$/.test(location.pathname);
-  const showHeaderBack = showIdeaDetailBack || showSceneDetailBack;
+  const showCharacterDetailBack = /^\/characters\/\d+$/.test(location.pathname);
+  const showHeaderBack = showIdeaDetailBack || showSceneDetailBack || showCharacterDetailBack;
   const backLabel = showSceneDetailBack ? "\u2190 Back to idea" : "\u2190 Back";
   const backTarget = stateFrom ?? "/ideas";
 
