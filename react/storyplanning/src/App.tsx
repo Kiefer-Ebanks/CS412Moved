@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
 import ImageDetailPage from "./pages/ImageDetailPage.tsx";
+import AccountPage from "./pages/AccountPage.tsx";
 import SceneDetailPage from "./pages/SceneDetailPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,16 @@ function App() {
           element={
             <RequireAuth>
               <IdeasPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for the Account Update Page to allow users to change their password or delete their account */}
+        <Route
+          path="/account"
+          element={
+            <RequireAuth>
+              <AccountPage />
             </RequireAuth>
           }
         />

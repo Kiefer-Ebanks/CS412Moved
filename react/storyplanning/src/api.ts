@@ -118,6 +118,62 @@ export async function register(
   return data as AuthResponse;
 }
 
+export async function changePassword(
+  /* Changing a user's password, but it requires the current password to be entered first */
+
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+
+  // Call the change password endpoint to send the current password and new password
+  const response = await authFetch("/api/account/password/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+  let data: Record<string, unknown> = {};
+  try {
+    data = (await response.json()) as Record<string, unknown>;
+  } catch {
+    // response.json() fails when the body is empty or not JSON so we can just leave data {} and use the generic message below
+  }
+  if (!response.ok) {
+    const msg =
+      typeof data.error === "string"
+        ? data.error
+        : typeof data.detail === "string"
+          ? data.detail
+          : "Could not update password";
+    throw new Error(msg);
+  }
+}
+
+export async function deleteAccount(): Promise<void> {
+  /* Deleting a user's account and all related data */
+
+  // Call the delete account endpoint to delete the user's account and all related data
+  const response = await authFetch("/api/account/", {
+    method: "DELETE",
+  });
+  if (response.ok) {
+    return;
+  }
+  let data: Record<string, unknown> = {};
+  try {
+    data = (await response.json()) as Record<string, unknown>;
+  } catch {
+    // response.json() fails when the body is empty or not JSON so we can just leave data {} and use the generic message below
+  }
+  const msg =
+    typeof data.error === "string"
+      ? data.error
+      : "Could not delete account";
+  throw new Error(msg);
+}
+
 /*
  * Fetch wrapper that attaches Authorization header when a token exists
  */

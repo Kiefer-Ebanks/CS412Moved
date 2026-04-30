@@ -36,6 +36,9 @@ function IdeasPage() {
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
       <h1>Ideas</h1>
       <p>Token auth works if this page can load data.</p>
+      <p style={{ marginBottom: 12 }}>
+        <Link to="/account">Account settings</Link>
+      </p>
       <button type="button" onClick={handleLogout}>
         Logout
       </button>
