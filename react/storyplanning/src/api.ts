@@ -421,6 +421,7 @@ export async function createScene(
   return response.json() as Promise<SceneDetailResponse>;
 }
 
+// shape of the character create response from the backend characters endpoint
 export type CharacterCreateResponse = {
   id: number;
   name: string;
@@ -435,12 +436,12 @@ export async function createCharacter(
   ideaId: number,
   payload: { name: string; description?: string; scene?: number | null },
 ): Promise<CharacterCreateResponse> {
-  /* Creates a character for one idea; scene is optional and must belong to that idea */
+  /* Creates a character for one idea. The scene is optional and has to belong to that idea */
 
-  const response = await authFetch(`/api/ideas/${ideaId}/characters/`, {
-    method: "POST",
+  const response = await authFetch(`/api/ideas/${ideaId}/characters/`, { // call the ideas endpoint to create a new character
+    method: "POST", // use the POST method to create a new character
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload), // send the new character data in the request body
   });
   if (!response.ok) {
     throw new Error("Could not create character");
@@ -470,6 +471,18 @@ export async function deleteScene(id: number): Promise<void> {
     return;
   }
   throw new Error("Could not delete scene");
+}
+
+export async function deleteCharacter(id: number): Promise<void> {
+  /* Deletes a character and backend cascades the delete to remove all related images */
+
+  const response = await authFetch(`/api/characters/${id}/`, { // call the characters endpoint to delete the character
+    method: "DELETE", // use the DELETE method to delete the character
+  });
+  if (response.ok) {
+    return;
+  }
+  throw new Error("Could not delete character");
 }
 
 

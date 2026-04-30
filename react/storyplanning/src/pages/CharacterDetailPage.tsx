@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import {
   clearToken,
+  deleteCharacter,
   getCharacter,
   resolveImageSrcForDisplay,
   type CharacterDetailResponse,
@@ -24,6 +25,7 @@ function CharacterDetailPage() {
 
   const [character, setCharacter] = useState<CharacterDetailResponse | null>(null);
   const [error, setError] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false); // state for the busy state of the delete character request
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -57,6 +59,26 @@ function CharacterDetailPage() {
   function handleLogout() {
     clearToken();
     navigate("/login");
+  }
+
+  async function handleDeleteCharacter() {
+    // deletes the character and the backend cascades the delete to remove all related images
+    if (!character) return;
+
+    // confirm the deletion with the user with a confirmation dialog box
+    if (!window.confirm("Delete this character and related character data? This cannot be undone.")) {
+      return;
+    }
+    setDeleteBusy(true);
+    try {
+      const ideaId = character.idea; // capture parent idea before delete to have a safe redirect target
+      await deleteCharacter(character.id);
+      navigate(`/ideas/${ideaId}`, { replace: true }); // navigate to the parent idea detail page after the character is deleted
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete character");
+    } finally {
+      setDeleteBusy(false);
+    }
   }
 
   return (
@@ -119,6 +141,18 @@ function CharacterDetailPage() {
             ) : (
               <p>No images linked to this character yet</p>
             )}
+          </section>
+
+          <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
+            <h2 style={{ color: "#8b0000" }}>Delete character</h2>
+            <p>This removes the character and related character data. This cannot be undone.</p>
+            <button
+              type="button"
+              onClick={() => void handleDeleteCharacter()}
+              disabled={deleteBusy}
+              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              {deleteBusy ? "Deleting..." : "Delete character"}
+            </button>
           </section>
         </>
       ) : null}
