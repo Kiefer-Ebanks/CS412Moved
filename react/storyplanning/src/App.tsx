@@ -39,9 +39,19 @@ function AuthenticatedLayout() {
   const showIdeaDetailBack = /^\/ideas\/\d+$/.test(location.pathname);
   const showSceneDetailBack = /^\/scenes\/\d+$/.test(location.pathname);
   const showCharacterDetailBack = /^\/characters\/\d+$/.test(location.pathname);
-  const showHeaderBack = showIdeaDetailBack || showSceneDetailBack || showCharacterDetailBack;
+  const showAccountBack = location.pathname === "/account";
+  const showImageDetailBack = /^\/images\/\d+$/.test(location.pathname);
+  const showDrawingDetailBack = /^\/drawings\/\d+$/.test(location.pathname);
+  const showHeaderBack =
+    showIdeaDetailBack ||
+    showSceneDetailBack ||
+    showCharacterDetailBack ||
+    showAccountBack ||
+    showImageDetailBack ||
+    showDrawingDetailBack;
   const backLabel = showSceneDetailBack ? "\u2190 Back to idea" : "\u2190 Back";
   const backTarget = stateFrom ?? "/ideas";
+  const accountLinkState = location.pathname === "/account" ? undefined : { from: `${location.pathname}${location.search}` };
 
   function handleLogout() {
     // clear auth token and route back to login when user logs out from navbar
@@ -62,7 +72,7 @@ function AuthenticatedLayout() {
               {backLabel}
             </Link>
           ) : null}
-          <Link to="/account" className="app-shell-account-link"> {/* Link to the account page */}
+          <Link to="/account" state={accountLinkState} className="app-shell-account-link"> {/* Link to the account page */}
             {username ?? "Account"}
           </Link>
           <button type="button" className="app-shell-logout-button" onClick={handleLogout}>

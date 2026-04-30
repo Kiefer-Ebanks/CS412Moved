@@ -658,8 +658,8 @@ function SceneDetailPage() {
           </section>
 
           <section style={{ marginTop: 42, paddingTop: 24, borderTop: "1px solid #ddd" }}>
-            <h2 style={{ color: "#8b0000" }}>Delete scene</h2>
-            <p style={{ marginTop: 10 }}>
+            <h2 style={{ color: "#8b0000", marginBottom: 10 }}>Delete scene</h2>
+            <p style={{ marginTop: 0, marginBottom: 18 }}>
               This removes the scene and related scene data. This cannot be undone.
             </p>
             <button
@@ -667,7 +667,7 @@ function SceneDetailPage() {
               onClick={() => void handleDeleteScene()} // call the handleDeleteScene function to delete the scene
               disabled={deleteBusy}
               style={{
-                marginTop: 14,
+                marginTop: 4,
                 background: "#c00",
                 color: "#fff",
                 border: "none",

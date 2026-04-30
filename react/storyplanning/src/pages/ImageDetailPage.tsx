@@ -4,7 +4,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  clearToken,
   deleteImage,
   getImage,
   resolveImageSrcForDisplay,
@@ -55,31 +54,17 @@ function ImageDetailPage() {
     void loadImage();
   }, [id]);
 
-  function handleBack() {
-    // if opened from another page, go there first (for normal cross-page navigation)
-    if (from) {
-      navigate(from);
-      return;
-    }
-    // fallback path avoids returning to create form: character first, then scene, then idea
-    if (image?.character != null) {
-      navigate(`/characters/${image.character}`);
-      return;
-    }
-    if (image?.scene != null) {
-      navigate(`/scenes/${image.scene}`);
-      return;
-    }
-    if (image) {
-      navigate(`/ideas/${image.idea}`);
-      return;
-    }
-    navigate("/ideas");
-  }
-
-  function handleLogout() {
-    clearToken();
-    navigate("/login");
+  function formatTimestamp(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   async function handleSaveDescription() {
@@ -142,16 +127,6 @@ function ImageDetailPage() {
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <button type="button" onClick={handleBack}>
-          &larr; Back
-        </button>
-      </p>
-
-      <button type="button" onClick={handleLogout}>
-        Logout
-      </button>
-
       {error ? (
         <p style={{ color: "crimson", marginTop: 16 }}>{error}</p>
       ) : null}
@@ -160,9 +135,6 @@ function ImageDetailPage() {
 
       {image ? (
         <>
-          <p>
-            <strong>Last updated:</strong> {image.timestamp}
-          </p>
           {src ? (
             <img
               src={src}
@@ -172,12 +144,15 @@ function ImageDetailPage() {
           ) : (
             <p>No image URL (upload or URL may be missing).</p>
           )}
+          <p style={{ marginTop: 12 }}>
+            <strong>Last updated:</strong> {formatTimestamp(image.timestamp)}
+          </p>
           <section style={{ marginTop: 24 }}>
             <h2>Description</h2>
             <p style={{ marginTop: 0, color: "#555" }}>
               Edit freely. Changes save only when you press Save changes.
             </p>
-            <div style={{ height: 260, border: "1px solid #ddd", borderRadius: 6, overflow: "auto" }}>
+            <div style={{ height: 180, border: "1px solid #ddd", borderRadius: 6, overflow: "auto" }}>
               <textarea
                 value={descriptionDraft}
                 onChange={(e) => setDescriptionDraft(e.target.value)}
@@ -239,8 +214,8 @@ function ImageDetailPage() {
           </nav>
 
           <section style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #ddd" }}>
-            <h3 style={{ marginTop: 0 }}>Delete image</h3>
-            <p style={{ color: "#555" }}>
+            <h3 style={{ marginTop: 0, marginBottom: 10 }}>Delete image</h3>
+            <p style={{ marginTop: 0, marginBottom: 18, color: "#555" }}>
               This removes this image entry permanently.
             </p>
             <button
@@ -248,6 +223,7 @@ function ImageDetailPage() {
               onClick={() => void handleDeleteImage()}
               disabled={deleteBusy}
               style={{
+                marginTop: 4,
                 background: "#b00020",
                 color: "white",
                 border: "none",

@@ -445,15 +445,15 @@ function CharacterDetailPage() {
           </section>
 
           <section style={{ marginTop: 42, paddingTop: 24, borderTop: "1px solid #ddd" }}>
-            <h2 style={{ color: "#8b0000" }}>Delete character</h2>
-            <p style={{ marginTop: 10 }}>
+            <h2 style={{ color: "#8b0000", marginBottom: 10 }}>Delete character</h2>
+            <p style={{ marginTop: 0, marginBottom: 18 }}>
               This removes the character and related character data. This cannot be undone.
             </p>
             <button
               type="button"
               onClick={() => void handleDeleteCharacter()}
               disabled={deleteBusy}
-              style={{ marginTop: 14, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              style={{ marginTop: 4, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
               {deleteBusy ? "Deleting..." : "Delete character"}
             </button>
           </section>

@@ -5,7 +5,7 @@
 
 
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   changePassword,
   changeUsername,
@@ -115,22 +115,20 @@ function AccountPage() {
 
   return (
     <main style={{ maxWidth: 480, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to="/ideas">&larr; Back to ideas</Link>
-      </p>
-
       <h1>{displayName}'s Account</h1>
       <p>Update your username and password or delete your account.</p>
-      <p style={{ marginTop: 10 }}>
+      <p style={{ marginTop: 35 }}>
         <button type="button" onClick={handleLogout}>
           Logout
         </button>
       </p>
 
       <section style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #ddd" }}>
-        <h2 style={{ fontSize: "1.1rem" }}>Change username</h2>
+        <h2 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Change username</h2>
         <form onSubmit={handleUsernameSubmit}>
-          <label htmlFor="new-username">New username</label>
+          <label htmlFor="new-username" style={{ display: "inline-block", marginTop: 4 }}>
+            New username
+          </label>
           <input
             id="new-username"
             type="text"
@@ -148,9 +146,11 @@ function AccountPage() {
       </section>
 
       <section style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #ddd" }}>
-        <h2 style={{ fontSize: "1.1rem" }}>Change password</h2>
+        <h2 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Change password</h2>
         <form onSubmit={handlePasswordSubmit}>
-          <label htmlFor="current-password">Current password</label>
+          <label htmlFor="current-password" style={{ display: "inline-block", marginTop: 4 }}>
+            Current password (required)
+          </label>
           <input
             id="current-password"
             type="password"
@@ -189,17 +189,23 @@ function AccountPage() {
       </section>
 
       <section style={{ marginTop: 36, paddingTop: 24, borderTop: "1px solid #ddd" }}>
-        <h2 style={{ fontSize: "1.1rem", color: "#8b0000" }}>Delete account</h2>
-        <p style={{ fontSize: "0.95rem" }}>
+        <h2 style={{ fontSize: "1.1rem", color: "#8b0000", marginBottom: 12 }}>Delete account</h2>
+        <p style={{ fontSize: "0.95rem", marginTop: 0, marginBottom: 18 }}>
           You must be signed in. Your user and all associated ideas, scenes, characters, and images will
           be removed. You will confirm in the next step.
         </p>
-        {delError ? <p style={{ color: "crimson" }}>{delError}</p> : null}
+        {delError ? <p style={{ color: "crimson", marginBottom: 12 }}>{delError}</p> : null}
         <button
           type="button"
           onClick={() => void handleDeleteAccount()}
           disabled={delBusy}
-          style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+          style={{
+            marginTop: delError ? 0 : 4,
+            background: "#c00",
+            color: "#fff",
+            border: "none",
+            padding: "8px 14px",
+          }}>
           {delBusy ? "Deleting…" : "Delete my account"}
         </button>
       </section>

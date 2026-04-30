@@ -70,6 +70,7 @@ function IdeaDetailPage() {
   const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
   const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
   const sceneClickTimerRef = useRef<number | null>(null); // single-click timer so scene title double-click can switch to edit mode
+  const characterClickTimerRef = useRef<number | null>(null); // single-click timer so character name double-click can switch to edit mode
   const storyboardMessageTimerRef = useRef<number | null>(null); // auto-clears storyboard success text after a short delay
 
   useEffect(() => {
@@ -200,9 +201,27 @@ function IdeaDetailPage() {
 
   function startCharacterNameEdit(character: CharacterRow) {
     // enter edit mode when user double-clicks a character name
+    if (characterClickTimerRef.current != null) {
+      window.clearTimeout(characterClickTimerRef.current);
+      characterClickTimerRef.current = null;
+    }
     setEditingCharacterId(character.id);
     setCharacterNameDraft(character.name);
     setError("");
+  }
+
+  function handleCharacterCardClick(characterId: number) {
+    // single-click anywhere on card opens detail; slight delay lets name double-click enter edit mode
+    if (editingCharacterId != null) return;
+    if (characterClickTimerRef.current != null) {
+      window.clearTimeout(characterClickTimerRef.current);
+    }
+    characterClickTimerRef.current = window.setTimeout(() => {
+      navigate(`/characters/${characterId}`, {
+        state: { from: `${location.pathname}${location.search}` },
+      });
+      characterClickTimerRef.current = null;
+    }, 220);
   }
 
   async function saveCharacterName(character: CharacterRow) {
@@ -486,13 +505,7 @@ function IdeaDetailPage() {
                   cursor: "pointer",
                 }}>
                 <strong>Create a new character</strong>
-                <Link
-                  to={`/ideas/${idea.id}/characters/new`}
-                  state={{ from: `${location.pathname}${location.search}` }}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
-                  &rarr;
-                </Link>
+                <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>&rarr;</span>
               </div>
 
               {idea.characters && idea.characters.length > 0 ? (
@@ -500,6 +513,7 @@ function IdeaDetailPage() {
                   {idea.characters.map((c) => (
                     <li
                       key={c.id}
+                      onClick={() => handleCharacterCardClick(c.id)}
                       style={{
                         border: "1px solid var(--border)",
                         borderRadius: 14,
@@ -510,6 +524,7 @@ function IdeaDetailPage() {
                         alignItems: "center",
                         justifyContent: "space-between",
                         gap: 10,
+                        cursor: "pointer",
                       }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         {editingCharacterId === c.id ? (
@@ -519,6 +534,7 @@ function IdeaDetailPage() {
                             onChange={(e) => setCharacterNameDraft(e.target.value)}
                             disabled={characterNameBusyId === c.id}
                             onBlur={() => void saveCharacterName(c)}
+                            onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
@@ -533,18 +549,16 @@ function IdeaDetailPage() {
                         ) : (
                           <strong
                             title="Double-click to rename"
-                            onDoubleClick={() => startCharacterNameEdit(c)}
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              startCharacterNameEdit(c);
+                            }}
                             style={{ cursor: "text", display: "block" }}>
                             {c.name}
                           </strong>
                         )}
                       </div>
-                      <Link
-                        to={`/characters/${c.id}`}
-                        state={{ from: `${location.pathname}${location.search}` }}
-                        style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
-                        &rarr;
-                      </Link>
+                      <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>&rarr;</span>
                     </li>
                   ))}
                 </ul>
@@ -754,15 +768,15 @@ function IdeaDetailPage() {
           </section>
 
           <section style={{ marginTop: 46, paddingTop: 20, borderTop: "1px solid #ddd" }}>
-            <h2 style={{ color: "#8b0000" }}>Delete idea</h2>
-            <p>
+            <h2 style={{ color: "#8b0000", marginBottom: 10 }}>Delete idea</h2>
+            <p style={{ marginTop: 0, marginBottom: 18 }}>
               This removes the idea and all related scenes, characters, and images. This cannot be undone
             </p>
             <button
               type="button"
               onClick={() => void handleDeleteIdea()}
               disabled={deleteBusy}
-              style={{ marginTop: 10, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              style={{ marginTop: 4, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
               {deleteBusy ? "Deleting..." : "Delete idea"}
             </button>
           </section>

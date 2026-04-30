@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { clearToken, deleteDrawing, getDrawing, type DrawingDetailResponse, updateDrawing } from "../api";
+import { deleteDrawing, getDrawing, type DrawingDetailResponse, updateDrawing } from "../api";
 
 type FromState = { from?: string };
 
@@ -42,6 +42,7 @@ function DrawingDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as FromState | null)?.from;
+  const returnTo = `${location.pathname}${location.search}`;
 
   const [drawing, setDrawing] = useState<DrawingDetailResponse | null>(null); // saved drawing response from backend
   const [titleDraft, setTitleDraft] = useState(""); // editable title draft
@@ -86,31 +87,17 @@ function DrawingDetailPage() {
     void loadDrawing();
   }, [id]);
 
-  function handleLogout() {
-    // logs out and routes to login page
-    clearToken();
-    navigate("/login");
-  }
-
-  function handleBack() {
-    // back prioritizes explicit caller path; fallback follows character->scene->idea hierarchy
-    if (from) {
-      navigate(from);
-      return;
-    }
-    if (drawing?.character != null) {
-      navigate(`/characters/${drawing.character}`);
-      return;
-    }
-    if (drawing?.scene != null) {
-      navigate(`/scenes/${drawing.scene}`);
-      return;
-    }
-    if (drawing) {
-      navigate(`/ideas/${drawing.idea}`);
-      return;
-    }
-    navigate("/ideas");
+  function formatTimestamp(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   async function buildThumbnailDataUrl(): Promise<string> {
@@ -207,16 +194,6 @@ function DrawingDetailPage() {
 
   return (
     <main style={{ maxWidth: 1100, margin: "1rem auto", padding: "0 1rem" }}>
-      <p>
-        <button type="button" onClick={handleBack}>
-          &larr; Back
-        </button>
-      </p>
-
-      <button type="button" onClick={handleLogout}>
-        Logout
-      </button>
-
       {error ? <p style={{ color: "crimson", marginTop: 16 }}>{error}</p> : null}
       {!drawing && !error ? <p>Loading...</p> : null}
 
@@ -224,7 +201,7 @@ function DrawingDetailPage() {
         <>
           <h1>Drawing editor</h1>
           <p>
-            <strong>Last updated:</strong> {drawing.timestamp}
+            <strong>Last updated:</strong> {formatTimestamp(drawing.timestamp)}
           </p>
 
           <label htmlFor="drawing-title">Title (optional)</label>
@@ -253,23 +230,42 @@ function DrawingDetailPage() {
             </button>
           </div>
 
+          <nav style={{ marginTop: 16, fontSize: "0.9rem", color: "#555" }} aria-label="Related records">
+            <strong>Go to:</strong>{" "}
+            <Link to={`/ideas/${drawing.idea}`} state={{ from: returnTo }}>
+              {drawing.idea_title?.trim() ? drawing.idea_title : "Idea"}
+            </Link>
+            {drawing.scene != null ? (
+              <>
+                {" · "}
+                <Link to={`/scenes/${drawing.scene}`} state={{ from: returnTo }}>
+                  {drawing.scene_title?.trim() ? drawing.scene_title : "Scene"}
+                </Link>
+              </>
+            ) : null}
+            {drawing.character != null ? (
+              <>
+                {" · "}
+                <Link to={`/characters/${drawing.character}`} state={{ from: returnTo }}>
+                  {drawing.character_name?.trim() ? drawing.character_name : "Character"}
+                </Link>
+              </>
+            ) : null}
+          </nav>
+
           <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
-            <h2 style={{ color: "#8b0000" }}>Delete drawing</h2>
-            <p>This removes the drawing permanently. This cannot be undone.</p>
+            <h2 style={{ color: "#8b0000", marginBottom: 10 }}>Delete drawing</h2>
+            <p style={{ marginTop: 0, marginBottom: 18 }}>
+              This removes the drawing permanently. This cannot be undone.
+            </p>
             <button
               type="button"
               onClick={() => void handleDeleteDrawing()}
               disabled={deleteBusy}
-              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              style={{ marginTop: 4, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
               {deleteBusy ? "Deleting..." : "Delete drawing"}
             </button>
           </section>
-
-          <p style={{ marginTop: 14 }}>
-            <Link to={`/ideas/${drawing.idea}`} state={{ from: `${location.pathname}${location.search}` }}>
-              Go to idea
-            </Link>
-          </p>
         </>
       ) : null}
     </main>
