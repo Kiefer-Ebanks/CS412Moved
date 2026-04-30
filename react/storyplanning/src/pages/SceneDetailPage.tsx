@@ -307,7 +307,7 @@ function SceneDetailPage() {
             <strong>Last updated:</strong> {formatTimestamp(scene.timestamp)}
           </p>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 48 }}>
             <h2>Outline</h2>
             <p style={{ marginTop: 0, color: "#555" }}>
               Edit freely. Changes save only when you press Save changes.

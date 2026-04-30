@@ -49,7 +49,11 @@ function AuthenticatedLayout() {
     showAccountBack ||
     showImageDetailBack ||
     showDrawingDetailBack;
-  const backLabel = showSceneDetailBack ? "\u2190 Back to idea" : "\u2190 Back";
+  const backLabel = showSceneDetailBack
+    ? "\u2190 Back to Idea"
+    : showIdeaDetailBack
+      ? "\u2190 Back to All Ideas"
+      : "\u2190 Back";
   const backTarget = stateFrom ?? "/ideas";
   const accountLinkState = location.pathname === "/account" ? undefined : { from: `${location.pathname}${location.search}` };
 
