@@ -2,7 +2,7 @@
 // Author: Kiefer Ebanks (kebanks@bu.edu), 4/28/2026
 // Description: API helpers for storyplanning React frontend.
 
-// Base URL for Django API (trim + strip trailing / so pasted Vercel values with spaces can't break URLs)
+// Base URL for Django backend, we trim and strip trailing slash so pasted Vercel values with spaces can't break URLs
 const _fromEnv =
   typeof import.meta.env.VITE_API_BASE_URL === "string"
     ? import.meta.env.VITE_API_BASE_URL.trim().replace(/\/+$/, "")
@@ -24,8 +24,14 @@ export function resolveImageSrcForDisplay(
     return url;
   }
   if (url.startsWith("/")) {
-    const base = new URL(API_BASE); // create a new URL object with the API base URL
-    return `${base.protocol}//${base.host}${url}`;
+    const base = new URL(API_BASE);
+    let path = url;
+
+    // On BU cs-webapps, MEDIA_URL is /kebanks/media/ but older rows may still use /media/ from local dev so we need to fix the host-only join to work with the new MEDIA_URL
+    if (path.startsWith("/media/") && base.pathname.includes("/kebanks/")) {
+      path = `/kebanks${path}`;
+    }
+    return `${base.protocol}//${base.host}${path}`;
   }
   return url;
 }
