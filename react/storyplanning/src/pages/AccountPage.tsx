@@ -107,6 +107,12 @@ function AccountPage() {
     }
   }
 
+  function handleLogout() {
+    // logs out immediately from account settings page and routes user to login
+    clearToken();
+    navigate("/login", { replace: true });
+  }
+
   return (
     <main style={{ maxWidth: 480, margin: "2rem auto", padding: "0 1rem" }}>
       <p>
@@ -115,6 +121,11 @@ function AccountPage() {
 
       <h1>{displayName}'s Account</h1>
       <p>Update your username and password or delete your account.</p>
+      <p style={{ marginTop: 10 }}>
+        <button type="button" onClick={handleLogout}>
+          Logout
+        </button>
+      </p>
 
       <section style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #ddd" }}>
         <h2 style={{ fontSize: "1.1rem" }}>Change username</h2>

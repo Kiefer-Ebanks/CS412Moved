@@ -4,12 +4,10 @@
 // It also allows the user to logout and navigate back to the login page
 
 import { useEffect, useState } from "react";
-import { clearToken, getIdeas, updateIdeaTitle, type IdeasListResponse } from "../api";
-import { Link, useNavigate } from "react-router-dom";
+import { getIdeas, updateIdeaTitle, type IdeasListResponse } from "../api";
+import { Link } from "react-router-dom";
 
 function IdeasPage() {
-
-  const navigate = useNavigate(); // using the useNavigate hook to navigate to the login page
   const [ideas, setIdeas] = useState<IdeasListResponse | null>(null); // state to store the ideas
   const [error, setError] = useState(""); // state to store any errors
   const [editingIdeaId, setEditingIdeaId] = useState<number | null>(null); // which idea title is in inline-edit mode
@@ -29,11 +27,6 @@ function IdeasPage() {
 
     loadIdeas();
   }, []);
-
-  function handleLogout() {
-    clearToken();
-    navigate("/login");
-  }
 
   function startInlineEdit(id: number, currentTitle: string) {
     // enter edit mode when user double-clicks a title
@@ -73,32 +66,58 @@ function IdeasPage() {
   }
 
   return (
-    <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
-      <h1>Ideas</h1>
-      <p>Token auth works if this page can load data.</p>
-      <p style={{ marginBottom: 12 }}>
-        <Link to="/account">Account settings</Link>
-      </p>
-      <button type="button" onClick={handleLogout}>
-        Logout
-      </button>
+    <main style={{ maxWidth: 880, margin: "2rem auto", padding: "0 1rem" }}>
+      <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>Your ideas</h1>
 
       {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
 
       {!ideas && !error ? <p>Loading...</p> : null}
 
-      {ideas ? (
-        <ul style={{ marginTop: 16, paddingLeft: 20 }}>
-          {/* separate create-idea row, formatted like other idea rows but not editable on double-click */}
-          <li style={{ marginBottom: 12 }}>
+      <section
+        style={{
+          margin: "0 auto",
+          maxWidth: 760,
+          border: "1px solid var(--border)",
+          borderRadius: 18,
+          overflow: "hidden",
+          background: "var(--surface)",
+          boxShadow: "0 12px 28px rgba(20, 20, 30, 0.12), 0 2px 6px rgba(20, 20, 30, 0.08)",
+        }}>
+        <ul
+          style={{
+            margin: 0,
+            padding: 0,
+            listStyle: "none",
+            maxHeight: "60vh",
+            overflowY: "auto",
+          }}>
+          {/* create-idea row is first row inside the ideas box */}
+          <li
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0.95rem 1rem",
+              borderBottom: "1px solid var(--border)",
+            }}>
             <strong>Create a new idea</strong>
-            {"  "}
-            <Link to="/ideas/new">&rarr;</Link> {/* link to the create idea page */}
+            <Link to="/ideas/new" style={{ textDecoration: "none", fontSize: "1.3rem", lineHeight: 1 }}>
+              &rarr;
+            </Link>
           </li>
 
-          {ideas.results.map((idea) => ( // map over the ideas and display them in a list
-            <li key={idea.id} style={{ marginBottom: 12 }}>
-              {editingIdeaId === idea.id ? ( // if the idea is being edited, display the input field
+          {ideas?.results.map((idea) => (
+            <li
+              key={idea.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "0.8rem",
+                padding: "0.95rem 1rem",
+                borderBottom: "1px solid var(--border)",
+              }}>
+              {editingIdeaId === idea.id ? (
                 <input
                   autoFocus
                   value={editingTitle}
@@ -115,35 +134,27 @@ function IdeasPage() {
                       setEditingTitle("");
                     }
                   }}
-                  style={{ width: "100%", maxWidth: 420, marginBottom: 4 }}
+                  style={{ flex: 1, minWidth: 0 }}
                 />
               ) : (
-                <>
-                  <strong
-                    title="Double-click to rename"
-                    onDoubleClick={() => startInlineEdit(idea.id, idea.title)}
-                    style={{ cursor: "text" }}>
-                    {idea.title}
-                  </strong>
-                  {"  "}
-                  <Link to={`/ideas/${idea.id}`}>&rarr;</Link>
-                </>
+                <strong
+                  title="Double-click to rename"
+                  onDoubleClick={() => startInlineEdit(idea.id, idea.title)}
+                  style={{ cursor: "text", flex: 1, minWidth: 0 }}>
+                  {idea.title}
+                </strong>
               )}
-              {idea.storyboard ? (
-                <p style={{ margin: "4px 0 0", whiteSpace: "pre-wrap" }}>
-                  {idea.storyboard.length > 160
-                    ? `${idea.storyboard.slice(0, 160)}…`
-                    : idea.storyboard}
-                </p>
-              ) : null}
+              <Link to={`/ideas/${idea.id}`} style={{ textDecoration: "none", fontSize: "1.3rem", lineHeight: 1 }}>
+                &rarr;
+              </Link>
             </li>
           ))}
-        </ul>
-      ) : null}
 
-      {ideas && ideas.results.length === 0 ? (
-        <p style={{ marginTop: 16 }}>No ideas yet</p>
-      ) : null}
+          {ideas && ideas.results.length === 0 ? (
+            <li style={{ padding: "0.95rem 1rem", color: "var(--text-muted)" }}>No ideas yet</li>
+          ) : null}
+        </ul>
+      </section>
     </main>
   );
 }

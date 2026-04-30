@@ -128,3 +128,13 @@ select {
 .app-shell-account-link:hover {
   color: var(--accent);
 }
+
+.app-shell-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.app-shell-logout-button {
+  padding: 0.25rem 0.6rem;
+}
