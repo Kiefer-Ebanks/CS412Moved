@@ -144,8 +144,8 @@ function SceneDetailPage() {
             {" · "}
           </>
         ) : null}
-        {/* since scenes belong to ideas, this sends users back to ideas list quickly */}
-        <Link to="/ideas">&larr; Back to ideas</Link>
+        {/* back button takes user back to the parent idea detail page */}
+        <Link to={scene ? `/ideas/${scene.idea}` : "/ideas"}>&larr; Back to idea</Link>
       </p>
 
       <button type="button" onClick={handleLogout}>
