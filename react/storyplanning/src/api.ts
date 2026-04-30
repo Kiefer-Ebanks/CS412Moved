@@ -2,9 +2,12 @@
 // Author: Kiefer Ebanks (kebanks@bu.edu), 4/28/2026
 // Description: API helpers for storyplanning React frontend.
 
-// Base URL for Django API, will also use the VITE_API_BASE_URL when I deploy it
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/storyplanning";
+// Base URL for Django API (trim + strip trailing / so pasted Vercel values with spaces can't break URLs)
+const _fromEnv =
+  typeof import.meta.env.VITE_API_BASE_URL === "string"
+    ? import.meta.env.VITE_API_BASE_URL.trim().replace(/\/+$/, "")
+    : "";
+const API_BASE = _fromEnv || "http://127.0.0.1:8000/storyplanning";
 
 export function resolveImageSrcForDisplay(
   /*
