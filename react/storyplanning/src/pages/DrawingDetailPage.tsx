@@ -54,6 +54,7 @@ function DrawingDetailPage() {
   const sceneSignatureRef = useRef<string>(""); // tracks current stable scene signature to avoid redundant updates
   const savedSceneSignatureRef = useRef<string>(""); // tracks last persisted scene signature for dirty-state comparison
   const sceneDataRef = useRef<Record<string, unknown>>({}); // stores latest canvas scene without forcing rerenders
+  const saveMessageTimerRef = useRef<number | null>(null); // auto-clears success text after a short delay
 
   useEffect(() => {
     // loads one drawing by route id and updates the editor draft state
@@ -153,6 +154,13 @@ function DrawingDetailPage() {
       savedSceneSignatureRef.current = savedSignature;
       setSceneDirty(false);
       setMessage("Drawing saved");
+      if (saveMessageTimerRef.current != null) {
+        window.clearTimeout(saveMessageTimerRef.current);
+      }
+      saveMessageTimerRef.current = window.setTimeout(() => {
+        setMessage("");
+        saveMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save drawing");
     } finally {
@@ -235,11 +243,14 @@ function DrawingDetailPage() {
           </div>
 
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-            {titleDirty || sceneDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+            {message ? (
+              <span style={{ color: "green" }}>{message}</span>
+            ) : titleDirty || sceneDirty ? (
+              <span style={{ color: "#990000" }}>Unsaved changes</span>
+            ) : null}
             <button type="button" onClick={() => void handleSaveDrawing()} disabled={busy}>
               {busy ? "Saving..." : "Save changes"}
             </button>
-            {message ? <span style={{ color: "green" }}>{message}</span> : null}
           </div>
 
           <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>

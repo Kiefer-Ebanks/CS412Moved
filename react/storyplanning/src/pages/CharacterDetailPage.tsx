@@ -2,7 +2,7 @@
 // Author: Kiefer Ebanks (kebanks@bu.edu), 4/29/2026
 // Description: Character detail from GET /api/characters/:id/ (name, description, nested images). Back navigation restores the prior route via location state.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   clearToken,
   deleteCharacter,
@@ -41,6 +41,8 @@ function CharacterDetailPage() {
   const [sceneDraftIds, setSceneDraftIds] = useState<number[]>([]); // local draft of selected scene ids for this character
   const [sceneBusy, setSceneBusy] = useState(false); // save state for scene affiliation updates
   const [sceneMessage, setSceneMessage] = useState(""); // success text after scene affiliation save
+  const descriptionMessageTimerRef = useRef<number | null>(null); // auto-clears description success text after a short delay
+  const sceneMessageTimerRef = useRef<number | null>(null); // auto-clears scene-save success text after a short delay
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -153,6 +155,13 @@ function CharacterDetailPage() {
 
       setCharacter({ ...character, description: updated.description, timestamp: updated.timestamp }); // update the local description text and timestamp with the new description text and timestamp from the backend
       setDescriptionMessage("Description saved"); // set the success message to "Description saved"
+      if (descriptionMessageTimerRef.current != null) {
+        window.clearTimeout(descriptionMessageTimerRef.current);
+      }
+      descriptionMessageTimerRef.current = window.setTimeout(() => {
+        setDescriptionMessage("");
+        descriptionMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update character description");
     } finally {
@@ -203,6 +212,13 @@ function CharacterDetailPage() {
       });
       setSceneDraftIds(updated.scenes ?? (updated.scene != null ? [updated.scene] : []));
       setSceneMessage("Scene affiliations saved");
+      if (sceneMessageTimerRef.current != null) {
+        window.clearTimeout(sceneMessageTimerRef.current);
+      }
+      sceneMessageTimerRef.current = window.setTimeout(() => {
+        setSceneMessage("");
+        sceneMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update scene affiliations");
     } finally {
@@ -288,11 +304,14 @@ function CharacterDetailPage() {
               />
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              {descriptionDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              {descriptionMessage ? (
+                <span style={{ color: "green" }}>{descriptionMessage}</span>
+              ) : descriptionDirty ? (
+                <span style={{ color: "#990000" }}>Unsaved changes</span>
+              ) : null}
               <button type="button" onClick={() => void handleSaveDescription()} disabled={descriptionBusy}>
                 {descriptionBusy ? "Saving..." : "Save changes"}
               </button>
-              {descriptionMessage ? <span style={{ color: "green" }}>{descriptionMessage}</span> : null}
             </div>
           </section>
 
@@ -320,11 +339,14 @@ function CharacterDetailPage() {
               <p>No scenes available for this idea yet.</p>
             )}
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              {sceneDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              {sceneMessage ? (
+                <span style={{ color: "green" }}>{sceneMessage}</span>
+              ) : sceneDirty ? (
+                <span style={{ color: "#990000" }}>Unsaved changes</span>
+              ) : null}
               <button type="button" onClick={() => void handleSaveScenes()} disabled={sceneBusy}>
                 {sceneBusy ? "Saving..." : "Save changes"}
               </button>
-              {sceneMessage ? <span style={{ color: "green" }}>{sceneMessage}</span> : null}
             </div>
           </section>
 

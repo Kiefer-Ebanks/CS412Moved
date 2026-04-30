@@ -41,6 +41,8 @@ function SceneDetailPage() {
   const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
   const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
   const characterClickTimerRef = useRef<number | null>(null); // single-click timer so double-click on name can still enter edit mode
+  const outlineMessageTimerRef = useRef<number | null>(null); // auto-clears outline success text after a short delay
+  const scriptMessageTimerRef = useRef<number | null>(null); // auto-clears script success text after a short delay
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN; // get the scene id from the route
@@ -65,8 +67,36 @@ function SceneDetailPage() {
     loadScene();
   }, [id]);
 
+  useEffect(() => {
+    // keep navbar back target pointing to this scene's parent idea detail page so we can click the back button to go back to the idea detail page
+
+    if (!scene) return;
+    const desiredFrom = `/ideas/${scene.idea}`;
+    const currentFrom = (location.state as { from?: string } | null)?.from;
+    if (currentFrom === desiredFrom) return;
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: { from: desiredFrom },
+    });
+  }, [scene, location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (characterClickTimerRef.current != null) {
+        window.clearTimeout(characterClickTimerRef.current);
+      }
+      if (outlineMessageTimerRef.current != null) {
+        window.clearTimeout(outlineMessageTimerRef.current);
+      }
+      if (scriptMessageTimerRef.current != null) {
+        window.clearTimeout(scriptMessageTimerRef.current);
+      }
+    };
+  }, []);
+
   function formatTimestamp(value: string): string {
     // format API timestamp as Month Day, Year and hour:minute AM/PM for easier reading
+
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleString(undefined, {
@@ -119,6 +149,14 @@ function SceneDetailPage() {
       const updated = await updateSceneContent(scene.id, { outline: outlineDraft }); // update the outline on the server
       setScene({ ...scene, outline: updated.outline, timestamp: updated.timestamp }); // updating the outline and timestamp so "Last updated" refreshes immediately
       setOutlineMessage("Outline saved"); // set the success message to "Outline saved"
+      
+      if (outlineMessageTimerRef.current != null) { // clear the timeout if it exists
+        window.clearTimeout(outlineMessageTimerRef.current);
+      }
+      outlineMessageTimerRef.current = window.setTimeout(() => { // set a new timeout to clear the success message after a short delay
+        setOutlineMessage("");
+        outlineMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update outline");
     } finally {
@@ -136,6 +174,14 @@ function SceneDetailPage() {
       const updated = await updateSceneContent(scene.id, { script: scriptDraft }); // update the script on the server
       setScene({ ...scene, script: updated.script, timestamp: updated.timestamp }); // updating the script and timestamp so "Last updated" refreshes immediately
       setScriptMessage("Script saved"); // set the success message to "Script saved"
+      
+      if (scriptMessageTimerRef.current != null) { // clear the timeout if it exists
+        window.clearTimeout(scriptMessageTimerRef.current);
+      }
+      scriptMessageTimerRef.current = window.setTimeout(() => { // set a new timeout to clear the success message after a short delay
+        setScriptMessage("");
+        scriptMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update script");
     } finally {
@@ -285,11 +331,14 @@ function SceneDetailPage() {
               />
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              {outlineDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              {outlineMessage ? (
+                <span style={{ color: "green" }}>{outlineMessage}</span>
+              ) : outlineDirty ? (
+                <span style={{ color: "#990000" }}>Unsaved changes</span>
+              ) : null}
               <button type="button" onClick={() => void handleSaveOutline()} disabled={outlineBusy}>
                 {outlineBusy ? "Saving..." : "Save changes"}
               </button>
-              {outlineMessage ? <span style={{ color: "green" }}>{outlineMessage}</span> : null}
             </div>
           </section>
 
@@ -317,11 +366,14 @@ function SceneDetailPage() {
               />
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              {scriptDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              {scriptMessage ? (
+                <span style={{ color: "green" }}>{scriptMessage}</span>
+              ) : scriptDirty ? (
+                <span style={{ color: "#990000" }}>Unsaved changes</span>
+              ) : null}
               <button type="button" onClick={() => void handleSaveScript()} disabled={scriptBusy}>
                 {scriptBusy ? "Saving..." : "Save changes"}
               </button>
-              {scriptMessage ? <span style={{ color: "green" }}>{scriptMessage}</span> : null}
             </div>
           </section>
 

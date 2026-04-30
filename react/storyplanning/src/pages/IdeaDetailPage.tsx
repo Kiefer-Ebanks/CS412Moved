@@ -70,6 +70,7 @@ function IdeaDetailPage() {
   const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
   const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
   const sceneClickTimerRef = useRef<number | null>(null); // single-click timer so scene title double-click can switch to edit mode
+  const storyboardMessageTimerRef = useRef<number | null>(null); // auto-clears storyboard success text after a short delay
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -190,7 +191,9 @@ function IdeaDetailPage() {
       window.clearTimeout(sceneClickTimerRef.current);
     }
     sceneClickTimerRef.current = window.setTimeout(() => {
-      navigate(`/scenes/${sceneId}`);
+      navigate(`/scenes/${sceneId}`, {
+        state: { from: `${location.pathname}${location.search}` },
+      });
       sceneClickTimerRef.current = null;
     }, 220);
   }
@@ -264,6 +267,13 @@ function IdeaDetailPage() {
       // keep local idea object in sync so other sections show current text if needed
       setIdea({ ...idea, storyboard: updated.storyboard, timestamp: updated.timestamp }); // updating the storyboard and timestamp so "Last updated" refreshes immediately
       setStoryboardMessage("Storyboard saved"); // set the success message to "Storyboard saved."
+      if (storyboardMessageTimerRef.current != null) {
+        window.clearTimeout(storyboardMessageTimerRef.current);
+      }
+      storyboardMessageTimerRef.current = window.setTimeout(() => {
+        setStoryboardMessage("");
+        storyboardMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update storyboard");
     } finally {
@@ -335,11 +345,14 @@ function IdeaDetailPage() {
               />
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              {storyboardDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              {storyboardMessage ? (
+                <span style={{ color: "green" }}>{storyboardMessage}</span>
+              ) : storyboardDirty ? (
+                <span style={{ color: "#990000" }}>Unsaved changes</span>
+              ) : null}
               <button type="button" onClick={() => void handleSaveStoryboard()} disabled={storyboardBusy}>
                 {storyboardBusy ? "Saving..." : "Save changes"}
               </button>
-              {storyboardMessage ? <span style={{ color: "green" }}>{storyboardMessage}</span> : null}
             </div>
           </section>
 

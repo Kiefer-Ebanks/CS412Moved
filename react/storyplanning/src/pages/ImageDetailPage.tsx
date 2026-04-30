@@ -2,7 +2,7 @@
 // Author: Kiefer Ebanks (kebanks@bu.edu), 4/30/2026
 // Description: shows an image and its description; Back uses location state. Links to parent idea and, when set, scene and character.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   clearToken,
   deleteImage,
@@ -31,6 +31,7 @@ function ImageDetailPage() {
   const [descriptionBusy, setDescriptionBusy] = useState(false); // tracks save request state for description
   const [descriptionMessage, setDescriptionMessage] = useState(""); // short success text after description save
   const [deleteBusy, setDeleteBusy] = useState(false); // tracks delete request state for this image
+  const descriptionMessageTimerRef = useRef<number | null>(null); // auto-clears success text after a short delay
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN; // get the image id from the route
@@ -94,6 +95,13 @@ function ImageDetailPage() {
       setImage(updated);
       setDescriptionDraft(updated.description ?? "");
       setDescriptionMessage("Saved");
+      if (descriptionMessageTimerRef.current != null) {
+        window.clearTimeout(descriptionMessageTimerRef.current);
+      }
+      descriptionMessageTimerRef.current = window.setTimeout(() => {
+        setDescriptionMessage("");
+        descriptionMessageTimerRef.current = null;
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save description");
     } finally {
@@ -188,11 +196,14 @@ function ImageDetailPage() {
               />
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-              {descriptionDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              {descriptionMessage ? (
+                <span style={{ color: "green" }}>{descriptionMessage}</span>
+              ) : descriptionDirty ? (
+                <span style={{ color: "#990000" }}>Unsaved changes</span>
+              ) : null}
               <button type="button" onClick={() => void handleSaveDescription()} disabled={descriptionBusy}>
                 {descriptionBusy ? "Saving..." : "Save changes"}
               </button>
-              {descriptionMessage ? <span style={{ color: "green" }}>{descriptionMessage}</span> : null}
             </div>
           </section>
           <nav style={{ marginTop: 16, fontSize: "0.9rem", color: "#555" }} aria-label="Related records">
