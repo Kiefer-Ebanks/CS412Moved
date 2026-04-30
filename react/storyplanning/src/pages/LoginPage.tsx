@@ -32,9 +32,17 @@ function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: "3rem auto", padding: "0 1rem" }}>
-      <h1>Login</h1>
-      <p>Sign in to StoryPlanning.</p>
+    <main
+      style={{
+        maxWidth: 460,
+        margin: "clamp(3.75rem, 14vh, 9rem) auto 3rem",
+        padding: "0 1.1rem",
+        fontSize: "1.0625rem",
+      }}>
+      <h1 style={{ fontSize: "clamp(2rem, 4.5vw, 2.5rem)", margin: "0 0 0.3em", lineHeight: 1.15 }}>
+        Login
+      </h1>
+      <p style={{ marginBottom: "1.15em" }}>Sign in to FilmBoard</p>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="username">Username</label>
@@ -44,7 +52,14 @@ function LoginPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: 12 }}
+          style={{
+            display: "block",
+            width: "100%",
+            marginBottom: 14,
+            fontSize: "1.0625rem",
+            padding: "11px 14px",
+            boxSizing: "border-box",
+          }}
         />
 
         <label htmlFor="password">Password</label>
@@ -54,17 +69,24 @@ function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: 12 }}
+          style={{
+            display: "block",
+            width: "100%",
+            marginBottom: 14,
+            fontSize: "1.0625rem",
+            padding: "11px 14px",
+            boxSizing: "border-box",
+          }}
         />
 
         {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} style={{ fontSize: "1.0625rem", padding: "11px 22px", marginTop: 2 }}>
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
 
-      <p style={{ marginTop: 16 }}>
+      <p style={{ marginTop: 20 }}>
         No account? <Link to="/register">Register</Link>
       </p>
     </main>

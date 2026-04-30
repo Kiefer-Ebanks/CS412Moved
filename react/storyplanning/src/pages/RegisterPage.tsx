@@ -15,7 +15,7 @@ function RegisterPage() {
   const [error, setError] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    // creates a new account and then goes to the ideas page
+    // creates a new account and then goes to the all ideas page
     event.preventDefault();
     setError("");
     setLoading(true);
@@ -32,9 +32,17 @@ function RegisterPage() {
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: "3rem auto", padding: "0 1rem" }}>
-      <h1>Register</h1>
-      <p>Create an account for StoryPlanning.</p>
+    <main
+      style={{
+        maxWidth: 460,
+        margin: "clamp(3.75rem, 14vh, 9rem) auto 3rem",
+        padding: "0 1.1rem",
+        fontSize: "1.0625rem",
+      }}>
+      <h1 style={{ fontSize: "clamp(2rem, 4.5vw, 2.5rem)", margin: "0 0 0.3em", lineHeight: 1.15 }}>
+        Register
+      </h1>
+      <p style={{ marginBottom: "1.15em" }}>Create an account for FilmBoard</p>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="username">Username</label>
@@ -44,7 +52,14 @@ function RegisterPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: 12 }}
+          style={{
+            display: "block",
+            width: "100%",
+            marginBottom: 14,
+            fontSize: "1.0625rem",
+            padding: "11px 14px",
+            boxSizing: "border-box",
+          }}
         />
 
         <label htmlFor="password">Password</label>
@@ -54,17 +69,24 @@ function RegisterPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ display: "block", width: "100%", marginBottom: 12 }}
+          style={{
+            display: "block",
+            width: "100%",
+            marginBottom: 14,
+            fontSize: "1.0625rem",
+            padding: "11px 14px",
+            boxSizing: "border-box",
+          }}
         />
 
         {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} style={{ fontSize: "1.0625rem", padding: "11px 22px", marginTop: 2 }}>
           {loading ? "Creating account..." : "Register"}
         </button>
       </form>
 
-      <p style={{ marginTop: 16 }}>
+      <p style={{ marginTop: 20 }}>
         Already have an account? <Link to="/login">Login</Link>
       </p>
     </main>
