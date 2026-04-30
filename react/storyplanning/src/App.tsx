@@ -4,8 +4,8 @@
 // It contains the routes for the application and checks if the user is authenticated
 // If the user is not authenticated it will take them to the login page
 
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { getToken } from "./api";
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { getStoredUsername, getToken } from "./api";
 import IdeaDetailPage from "./pages/IdeaDetailPage.tsx";
 import IdeasPage from "./pages/IdeasPage.tsx";
 import CreateIdeaPage from "./pages/CreateIdeaPage.tsx";
@@ -29,6 +29,33 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return children;
 }
 
+function AuthenticatedLayout() {
+  // layout component that is used to display the shared top bar with title and account information forall the pages in my app
+
+  const username = getStoredUsername();
+
+  return (
+    <>
+      {/* Shared top bar for authenticated non-create pages */}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1rem",
+          borderBottom: "1px solid #ddd",
+          marginBottom: "1rem",
+        }}>
+        <h2 style={{ margin: 0 }}>FilmBoard</h2>
+        <Link to="/account" style={{ textDecoration: "none" }}>
+          {username ?? "Account"}
+        </Link>
+      </header>
+      <Outlet />
+    </>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -42,16 +69,6 @@ function App() {
 
         {/* Route for the register page */}
         <Route path="/register" element={<RegisterPage />} />
-
-        {/* Route for the ideas page */}
-        <Route
-          path="/ideas"
-          element={
-            <RequireAuth>
-              <IdeasPage />
-            </RequireAuth>
-          }
-        />
 
         {/* Route for creating a new idea */}
         <Route
@@ -113,65 +130,34 @@ function App() {
           }
         />
 
-        {/* Route for the Account Update Page to allow users to change their password or delete their account */}
+        {/* All pages use this shared page header */}
         <Route
-          path="/account"
           element={
             <RequireAuth>
-              <AccountPage />
+              <AuthenticatedLayout />
             </RequireAuth>
-          }
-        />
+          }>
+          {/* Route for the ideas page */}
+          <Route path="/ideas" element={<IdeasPage />} />
 
-        {/* Route for the idea detail page */}
-        <Route
-          path="/ideas/:id"
-          element={
-            <RequireAuth>
-              <IdeaDetailPage />
-            </RequireAuth>
-          }
-        />
+          {/* Route for the Account Update Page to allow users to change their password or delete their account */}
+          <Route path="/account" element={<AccountPage />} />
 
-        {/* Route for the scene detail page */}
-        <Route
-          path="/scenes/:id"
-          element={
-            <RequireAuth>
-              <SceneDetailPage />
-            </RequireAuth>
-          }
-        />
+          {/* Route for the idea detail page */}
+          <Route path="/ideas/:id" element={<IdeaDetailPage />} />
 
-        {/* Route for the character detail page */}
-        <Route
-          path="/characters/:id"
-          element={
-            <RequireAuth>
-              <CharacterDetailPage />
-            </RequireAuth>
-          }
-        />
+          {/* Route for the scene detail page */}
+          <Route path="/scenes/:id" element={<SceneDetailPage />} />
 
-        {/* Route for the image detail page (opened from idea / scene / character pages) */}
-        <Route
-          path="/images/:id"
-          element={
-            <RequireAuth>
-              <ImageDetailPage />
-            </RequireAuth>
-          }
-        />
+          {/* Route for the character detail page */}
+          <Route path="/characters/:id" element={<CharacterDetailPage />} />
 
-        {/* Route for a specific drawing editor page */}
-        <Route
-          path="/drawings/:id"
-          element={
-            <RequireAuth>
-              <DrawingDetailPage />
-            </RequireAuth>
-          }
-        />
+          {/* Route for the image detail page */}
+          <Route path="/images/:id" element={<ImageDetailPage />} />
+
+          {/* Route for a specific drawing editor page */}
+          <Route path="/drawings/:id" element={<DrawingDetailPage />} />
+        </Route>
 
       </Routes>
     </BrowserRouter>
