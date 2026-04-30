@@ -3,7 +3,7 @@
 // This page displays the details of a single idea, including the title, storyboard, scenes, characters, and images
 // It also allows the user to logout and navigate back to the ideas list
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   deleteIdea,
@@ -69,6 +69,7 @@ function IdeaDetailPage() {
   const [characterNameDraft, setCharacterNameDraft] = useState(""); // draft text for inline character rename input
   const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
   const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
+  const sceneClickTimerRef = useRef<number | null>(null); // single-click timer so scene title double-click can switch to edit mode
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -141,6 +142,10 @@ function IdeaDetailPage() {
 
   function startSceneTitleEdit(scene: SceneRow) {
     // enter edit mode when user double-clicks a scene title
+    if (sceneClickTimerRef.current != null) {
+      window.clearTimeout(sceneClickTimerRef.current);
+      sceneClickTimerRef.current = null;
+    }
 
     setEditingSceneId(scene.id); // set the editing scene id to the id of the scene that the user double-clicked
     setSceneTitleDraft(scene.title); // set the scene title draft to the current title of the scene that the user double-clicked
@@ -176,6 +181,18 @@ function IdeaDetailPage() {
     } finally {
       setSceneTitleBusyId(null);
     }
+  }
+
+  function handleSceneCardClick(sceneId: number) {
+    // single-click on a scene card opens detail; slight delay lets double-click enter title edit mode
+    if (editingSceneId != null) return;
+    if (sceneClickTimerRef.current != null) {
+      window.clearTimeout(sceneClickTimerRef.current);
+    }
+    sceneClickTimerRef.current = window.setTimeout(() => {
+      navigate(`/scenes/${sceneId}`);
+      sceneClickTimerRef.current = null;
+    }, 220);
   }
 
   function startCharacterNameEdit(character: CharacterRow) {
@@ -328,136 +345,188 @@ function IdeaDetailPage() {
 
           <section style={{ marginTop: 24 }}>
             <h2>Scenes</h2>
-            {idea.scenes && idea.scenes.length > 0 ? (
-              <ul>
-                {/* create-scene row, formatted like list rows but the text is not editable */}
-                <li style={{ marginBottom: 12 }}>
-                  <strong>Create a new scene</strong>
-                  {"  "}
-                  <Link to={`/ideas/${idea.id}/scenes/new`}>&rarr;</Link>
-                </li>
+            <div
+              style={{
+                padding: 10,
+                maxHeight: 290,
+                overflowY: "auto",
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: "1px solid var(--border)",
+                  borderRadius: 14,
+                  background: "var(--surface)",
+                  padding: "0.8rem 1rem",
+                  marginBottom: 10,
+                }}>
+                <strong>Create a new scene</strong>
+                <Link to={`/ideas/${idea.id}/scenes/new`} style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
+                  &rarr;
+                </Link>
+              </div>
 
-                {idea.scenes.map((s) => (
-                  <li key={s.id}>
-                    {editingSceneId === s.id ? (
-                      <input
-                        autoFocus
-                        value={sceneTitleDraft}
-                        onChange={(e) => setSceneTitleDraft(e.target.value)}
-                        disabled={sceneTitleBusyId === s.id}
-                        onBlur={() => void saveSceneTitle(s)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void saveSceneTitle(s);
-                          } else if (e.key === "Escape") {
-                            setEditingSceneId(null);
-                            setSceneTitleDraft("");
-                          }
-                        }}
-                        style={{ width: "100%", maxWidth: 420, marginBottom: 4 }}
-                      />
-                    ) : (
-                      <>
-                        {/* double-click scene title to edit it inline */}
-                        <strong
-                          title="Double-click to rename" // title attribute to display when hovering over the scene title
-                          onDoubleClick={() => startSceneTitleEdit(s)}
-                          style={{ cursor: "text" }}> {/* changing the cursor to text when the scene title is double-clicked */}
-                          {s.title} {/* display the scene title */}
-                        </strong>
-                        {"  "}
-                        <Link to={`/scenes/${s.id}`}>&rarr;</Link> {/* link to the scene detail page */}
-                      </>
-                    )}
-                    {s.outline ? (
-                      <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
-                        {s.outline}
-                      </p>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <>
+              {idea.scenes && idea.scenes.length > 0 ? (
+                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  {idea.scenes.map((s) => (
+                    <li
+                      key={s.id}
+                      onClick={() => handleSceneCardClick(s.id)}
+                      style={{
+                        border: "1px solid var(--border)",
+                        borderRadius: 14,
+                        background: "var(--surface)",
+                        padding: "0.8rem 1rem",
+                        marginBottom: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        cursor: editingSceneId === s.id ? "default" : "pointer",
+                      }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {editingSceneId === s.id ? (
+                          <input
+                            autoFocus
+                            value={sceneTitleDraft}
+                            onChange={(e) => setSceneTitleDraft(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            disabled={sceneTitleBusyId === s.id}
+                            onBlur={() => void saveSceneTitle(s)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void saveSceneTitle(s);
+                              } else if (e.key === "Escape") {
+                                setEditingSceneId(null);
+                                setSceneTitleDraft("");
+                              }
+                            }}
+                            style={{ width: "100%", marginBottom: 4 }}
+                          />
+                        ) : (
+                          <strong
+                            title="Double-click to rename"
+                            onDoubleClick={() => startSceneTitleEdit(s)}
+                            style={{ cursor: "text", display: "block" }}>
+                            {s.title}
+                          </strong>
+                        )}
+                        {s.outline ? (
+                          <p
+                            style={{
+                              marginTop: 4,
+                              color: "var(--text-muted)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}>
+                            {s.outline}
+                          </p>
+                        ) : null}
+                      </div>
+                      <Link
+                        to={`/scenes/${s.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
+                        &rarr;
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
                 <p>No scenes yet</p>
-                <p>
-                  <strong>Create a new scene</strong>
-                  {"  "}
-                  <Link to={`/ideas/${idea.id}/scenes/new`}>&rarr;</Link> {/* link to the create scene page */}
-                </p>
-              </>
-            )}
+              )}
+            </div>
           </section>
 
           <section style={{ marginTop: 24 }}>
             <h2>Characters</h2>
-            {idea.characters && idea.characters.length > 0 ? (
-              <ul>
-                {/* create-character row, formatted like list rows but not editable */}
-                <li style={{ marginBottom: 12 }}>
-                  <strong>Create a new character</strong>
-                  {"  "}
-                  <Link
-                    to={`/ideas/${idea.id}/characters/new`}
-                    state={{ from: `${location.pathname}${location.search}` }}>
-                    &rarr;
-                  </Link>
-                </li>
+            <div
+              style={{
+                padding: 10,
+                maxHeight: 290,
+                overflowY: "auto",
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: "1px solid var(--border)",
+                  borderRadius: 14,
+                  background: "var(--surface)",
+                  padding: "0.8rem 1rem",
+                  marginBottom: 10,
+                }}>
+                <strong>Create a new character</strong>
+                <Link
+                  to={`/ideas/${idea.id}/characters/new`}
+                  state={{ from: `${location.pathname}${location.search}` }}
+                  style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
+                  &rarr;
+                </Link>
+              </div>
 
-                {idea.characters.map((c) => (
-                  <li key={c.id}>
-                    {editingCharacterId === c.id ? (
-                      <input
-                        autoFocus
-                        value={characterNameDraft}
-                        onChange={(e) => setCharacterNameDraft(e.target.value)}
-                        disabled={characterNameBusyId === c.id}
-                        onBlur={() => void saveCharacterName(c)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void saveCharacterName(c);
-                          } else if (e.key === "Escape") {
-                            setEditingCharacterId(null);
-                            setCharacterNameDraft("");
-                          }
-                        }}
-                        style={{ width: "100%", maxWidth: 420, marginBottom: 4 }}
-                      />
-                    ) : (
-                      <>
-                        <strong
-                          title="Double-click to rename"
-                          onDoubleClick={() => startCharacterNameEdit(c)}
-                          style={{ cursor: "text" }}>
-                          {c.name}
-                        </strong>
-                        {"  "}
-                        <Link
-                          to={`/characters/${c.id}`}
-                          state={{ from: `${location.pathname}${location.search}` }}>
-                          &rarr;
-                        </Link>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <>
+              {idea.characters && idea.characters.length > 0 ? (
+                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  {idea.characters.map((c) => (
+                    <li
+                      key={c.id}
+                      style={{
+                        border: "1px solid var(--border)",
+                        borderRadius: 14,
+                        background: "var(--surface)",
+                        padding: "0.8rem 1rem",
+                        marginBottom: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                      }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {editingCharacterId === c.id ? (
+                          <input
+                            autoFocus
+                            value={characterNameDraft}
+                            onChange={(e) => setCharacterNameDraft(e.target.value)}
+                            disabled={characterNameBusyId === c.id}
+                            onBlur={() => void saveCharacterName(c)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void saveCharacterName(c);
+                              } else if (e.key === "Escape") {
+                                setEditingCharacterId(null);
+                                setCharacterNameDraft("");
+                              }
+                            }}
+                            style={{ width: "100%" }}
+                          />
+                        ) : (
+                          <strong
+                            title="Double-click to rename"
+                            onDoubleClick={() => startCharacterNameEdit(c)}
+                            style={{ cursor: "text", display: "block" }}>
+                            {c.name}
+                          </strong>
+                        )}
+                      </div>
+                      <Link
+                        to={`/characters/${c.id}`}
+                        state={{ from: `${location.pathname}${location.search}` }}
+                        style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
+                        &rarr;
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
                 <p>No characters yet</p>
-                <p>
-                  <strong>Create a new character</strong>
-                  {"  "}
-                  <Link
-                    to={`/ideas/${idea.id}/characters/new`}
-                    state={{ from: `${location.pathname}${location.search}` }}>
-                    &rarr;
-                  </Link>
-                </p>
-              </>
-            )}
+              )}
+            </div>
           </section>
 
           <section style={{ marginTop: 24 }}>
