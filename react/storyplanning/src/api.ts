@@ -174,7 +174,7 @@ export type SceneCharacterRow = {
   scene: number | null;
 };
 
-// image object from SceneSerializer
+// image model from SceneSerializer and idea_title, scene_title, character_name from ImageSerializer
 export type SceneImageRow = {
   id: number;
   image?: string;
@@ -185,9 +185,12 @@ export type SceneImageRow = {
   scene?: number | null;
   character?: number | null;
   idea: number;
+  idea_title?: string;
+  scene_title?: string | null;
+  character_name?: string | null;
 };
 
-// shape of the scene detail response from /api/scenes/:id/
+// shape of the scene detail response from scenes endpoint
 export type SceneDetailResponse = {
   id: number;
   title: string;
@@ -199,7 +202,7 @@ export type SceneDetailResponse = {
   images: SceneImageRow[];
 };
 
-// shape of the character model that we get from the backend /api/characters/:id/ endpoint with images linked to the character
+// shape of the character model that we get from the backend charactersendpoint with images linked to the character
 export type CharacterDetailResponse = {
   id: number;
   name: string;
@@ -269,4 +272,21 @@ export async function getCharacter(id: number): Promise<CharacterDetailResponse>
     throw new Error("Couldn't get the character from the API");
   }
   return response.json() as Promise<CharacterDetailResponse>;
+}
+
+// shape of the image detail response from the backend images endpoint
+export type ImageDetailResponse = SceneImageRow;
+
+export async function getImage(id: number): Promise<ImageDetailResponse> {
+  /* Returns one image row for the image detail page */
+
+  const response = await authFetch(`/api/images/${id}/`); // fetches from the images endpoint to get the image
+  
+  if (response.status === 404) {
+    throw new Error("Image not found");
+  }
+  if (!response.ok) {
+    throw new Error("Couldn't get the image from the API");
+  }
+  return response.json() as Promise<ImageDetailResponse>;
 }

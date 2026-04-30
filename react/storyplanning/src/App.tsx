@@ -11,6 +11,7 @@ import IdeasPage from "./pages/IdeasPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
+import ImageDetailPage from "./pages/ImageDetailPage.tsx";
 import SceneDetailPage from "./pages/SceneDetailPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -70,6 +71,16 @@ function App() {
           element={
             <RequireAuth>
               <CharacterDetailPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for the image detail page (opened from idea / scene / character pages) */}
+        <Route
+          path="/images/:id"
+          element={
+            <RequireAuth>
+              <ImageDetailPage />
             </RequireAuth>
           }
         />

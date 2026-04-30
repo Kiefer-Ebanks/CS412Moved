@@ -9,7 +9,7 @@ import {
   resolveImageSrcForDisplay,
   type CharacterDetailResponse,
 } from "../api";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 // shape of the from state object that we get from the location state
 type FromState = {
@@ -97,16 +97,22 @@ function CharacterDetailPage() {
               <ul style={{ listStyle: "none", padding: 0 }}>
                 {character.images.map((img) => (
                   <li key={img.id} style={{ marginBottom: 16 }}>
-                    {img.image ? (
-                      <>
-                        <img
-                          src={resolveImageSrcForDisplay(img.image) ?? ""}
-                          alt={img.description ?? "character image"}
-                          style={{ maxWidth: "100%", maxHeight: 240 }}
-                        />
-                      </>
-                    ) : null}
-                    <p>{img.description || "(no description)"}</p>
+                    <Link
+                      to={`/images/${img.id}`}
+                      state={{ from: `${location.pathname}${location.search}` }}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      {img.image ? (
+                        <>
+                          <img
+                            src={resolveImageSrcForDisplay(img.image) ?? ""}
+                            alt={img.description ?? "character image"}
+                            style={{ maxWidth: "100%", maxHeight: 240, display: "block" }}
+                          />
+                        </>
+                      ) : null}
+                      <p>{img.description || "(no description)"}</p>
+                    </Link>
                   </li>
                 ))}
               </ul>

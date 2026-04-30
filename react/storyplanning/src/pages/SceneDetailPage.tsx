@@ -11,12 +11,17 @@ import {
   type SceneDetailResponse,
 } from "../api";
 
+type FromState = {
+  from?: string;
+};
+
 function SceneDetailPage() {
 
   // Get the scene id from the URL and setup navigation
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation(); // get the current page location
+  const backTo = (location.state as FromState | null)?.from; // e.g. return to image detail when opened from there
 
   // State for the scene detail response and error text
   const [scene, setScene] = useState<SceneDetailResponse | null>(null);
@@ -51,6 +56,13 @@ function SceneDetailPage() {
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
       <p>
+        {backTo ? (
+          <>
+            {/* opened from another screen (e.g. image detail); jump back without losing scroll/history expectations */}
+            <Link to={backTo}>&larr; Back</Link>
+            {" · "}
+          </>
+        ) : null}
         {/* since scenes belong to ideas, this sends users back to ideas list quickly */}
         <Link to="/ideas">&larr; Back to ideas</Link>
       </p>
@@ -115,17 +127,23 @@ function SceneDetailPage() {
               <ul style={{ listStyle: "none", padding: 0 }}>
                 {scene.images.map((image) => (
                   <li key={image.id} style={{ marginBottom: 16 }}>
-                    {image.image ? (
-                      <>
-                        {/* convert media paths to full URLs so uploaded files load in React */}
-                        <img
-                          src={resolveImageSrcForDisplay(image.image) ?? ""}
-                          alt={image.description ?? "scene image"}
-                          style={{ maxWidth: "100%", maxHeight: 240 }}
-                        />
-                      </>
-                    ) : null}
-                    <p>{image.description || "(no description)"}</p>
+                    <Link
+                      to={`/images/${image.id}`}
+                      state={{ from: `${location.pathname}${location.search}` }}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      {image.image ? (
+                        <>
+                          {/* convert media paths to full URLs so uploaded files load in React */}
+                          <img
+                            src={resolveImageSrcForDisplay(image.image) ?? ""}
+                            alt={image.description ?? "scene image"}
+                            style={{ maxWidth: "100%", maxHeight: 240, display: "block" }}
+                          />
+                        </>
+                      ) : null}
+                      <p>{image.description || "(no description)"}</p>
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -41,12 +41,17 @@ type IdeaDetail = {
   images?: ImageRow[];
 };
 
+type FromState = {
+  from?: string;
+};
+
 function IdeaDetailPage() {
   // Get the idea id from the URL and navigate to the idea detail page
 
   const { id } = useParams(); // get the idea id from the URL
   const navigate = useNavigate(); // navigate to the idea detail page
   const location = useLocation(); // get the current page location
+  const backTo = (location.state as FromState | null)?.from; // e.g. return to image detail when opened from there
 
   // State for the idea detail
   const [idea, setIdea] = useState<IdeaDetail | null>(null); // the idea detail object
@@ -81,6 +86,12 @@ function IdeaDetailPage() {
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
       <p>
+        {backTo ? (
+          <>
+            <Link to={backTo}>&larr; Back</Link>
+            {" · "}
+          </>
+        ) : null}
         <Link to="/ideas">&larr; Back to ideas</Link>
       </p>
 
@@ -144,11 +155,6 @@ function IdeaDetailPage() {
                     >
                       <strong>{c.name}</strong>
                     </Link>
-                    {c.description ? (
-                      <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
-                        {c.description}
-                      </p>
-                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -163,17 +169,24 @@ function IdeaDetailPage() {
               <ul style={{ listStyle: "none", padding: 0 }}>
                 {idea.images.map((img) => (
                   <li key={img.id} style={{ marginBottom: 16 }}>
-                    {img.image ? (
-                      <>
-                        {/* since the backend may return /media images we call resolveImageSrcForDisplay to add the Django host so <img> loads correctly */}
-                        <img
-                          src={resolveImageSrcForDisplay(img.image) ?? ""}
-                          alt={img.description ?? "idea image"}
-                          style={{ maxWidth: "100%", maxHeight: 240 }}
-                        />
-                      </>
-                    ) : null}
-                    <p>{img.description || "No description"}</p>
+                    {/* whole card is clickable so we pass `from` for Back on the image detail page */}
+                    <Link
+                      to={`/images/${img.id}`}
+                      state={{ from: `${location.pathname}${location.search}` }}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      {img.image ? (
+                        <>
+                          {/* since the backend may return /media images we call resolveImageSrcForDisplay to add the Django host so <img> loads correctly */}
+                          <img
+                            src={resolveImageSrcForDisplay(img.image) ?? ""}
+                            alt={img.description ?? "idea image"}
+                            style={{ maxWidth: "100%", maxHeight: 240, display: "block" }}
+                          />
+                        </>
+                      ) : null}
+                      <p>{img.description || "No description"}</p>
+                    </Link>
                   </li>
                 ))}
               </ul>
