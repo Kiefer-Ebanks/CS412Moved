@@ -5,7 +5,7 @@
 :root {
   
   /* Core theme tokens for the whole app UI */
-  --font-sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: "Courier New", Courier, monospace;
   --bg: #f6f7fb;
   --surface: #ffffff;
   --surface-muted: #f1f4f9;
