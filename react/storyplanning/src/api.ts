@@ -6,6 +6,27 @@
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/storyplanning";
 
+export function resolveImageSrcForDisplay(
+  /*
+  * Turns backend image strings into a valid http urls external links
+  * keeps normal http urls the same but adds http or https to media path images
+  * so the browser can load the image files uploaded to the backend
+  */
+  url: string | undefined | null,
+): string | undefined {
+  if (url == null || url === "") {
+    return undefined;
+  }
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (url.startsWith("/")) {
+    const base = new URL(API_BASE); // create a new URL object with the API base URL
+    return `${base.protocol}//${base.host}${url}`;
+  }
+  return url;
+}
+
 // localStorage key used to persist auth token, this is used to store the token in the browser's localStorage
 const TOKEN_KEY = "storyplanning_token";
 
@@ -134,17 +155,46 @@ export async function authFetch(path: string, init?: RequestInit): Promise<Respo
   return fetch(`${API_BASE}${path}`, requestInit);
 }
 
-/*
- * Returns ideas visible to current token user.
- */
-export async function getIdeas(): Promise<unknown> {
+// Shape of one row from the paginated ideas list API
+export type IdeaListItem = {
+  id: number;
+  title: string;
+  storyboard: string;
+  timestamp: string;
+  user: number;
+};
 
-  // Hit the ideas endpoint to get the ideas
-  const response = await authFetch("/api/ideas/");
+// Paginated response for the ideas list from GET /api/ideas/ 
+export type IdeasListResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: IdeaListItem[];
+};
+
+
+export async function getIdeas(): Promise<IdeasListResponse> {
+  /* Returns ideas visible to the current user */
+
+  const response = await authFetch("/api/ideas/"); // hit the ideas endpoint to get the ideas
   if (!response.ok) {
-    throw new Error("Failed to fetch ideas");
+    throw new Error("Couldn't get the ideas from the API");
   }
 
-  // Return parsed JSON payload to get the data from the response
+  // Return the JSON body to get the data from the response and return the ideas
+  return response.json() as Promise<IdeasListResponse>;
+}
+
+
+export async function getIdea(id: number): Promise<unknown> {
+  /* Returns one idea with the attached scenes, characters, and images */
+
+  const response = await authFetch(`/api/ideas/${id}/`); // hit the ideas endpoint to get the idea
+  if (response.status === 404) {
+    throw new Error("Idea not found");
+  }
+  if (!response.ok) {
+    throw new Error("Couldn't get the idea from the API");
+  }
   return response.json();
 }
