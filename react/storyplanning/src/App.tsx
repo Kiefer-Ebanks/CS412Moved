@@ -13,6 +13,8 @@ import CreateScenePage from "./pages/CreateScenePage.tsx";
 import CreateCharacterPage from "./pages/CreateCharacterPage.tsx";
 import CreateImageUploadPage from "./pages/CreateImageUploadPage.tsx";
 import CreateImageLinkPage from "./pages/CreateImageLinkPage.tsx";
+import CreateDrawingPage from "./pages/CreateDrawingPage.tsx";
+import DrawingDetailPage from "./pages/DrawingDetailPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
@@ -101,6 +103,16 @@ function App() {
           }
         />
 
+        {/* Route for creating a new drawing for a specific idea */}
+        <Route
+          path="/ideas/:id/drawings/new"
+          element={
+            <RequireAuth>
+              <CreateDrawingPage />
+            </RequireAuth>
+          }
+        />
+
         {/* Route for the Account Update Page to allow users to change their password or delete their account */}
         <Route
           path="/account"
@@ -147,6 +159,16 @@ function App() {
           element={
             <RequireAuth>
               <ImageDetailPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for a specific drawing editor page */}
+        <Route
+          path="/drawings/:id"
+          element={
+            <RequireAuth>
+              <DrawingDetailPage />
             </RequireAuth>
           }
         />

@@ -288,6 +288,21 @@ export type ImageRow = {
   character_name?: string | null;
 };
 
+// drawing model shape from DrawingSerializer
+export type DrawingRow = {
+  id: number;
+  title?: string;
+  scene_data: Record<string, unknown>;
+  thumbnail_data_url?: string;
+  timestamp: string;
+  scene?: number | null;
+  character?: number | null;
+  idea: number;
+  idea_title?: string;
+  scene_title?: string | null;
+  character_name?: string | null;
+};
+
 // shape of the scene detail response from scenes endpoint
 export type SceneDetailResponse = {
   id: number;
@@ -298,6 +313,7 @@ export type SceneDetailResponse = {
   idea: number;
   characters: SceneCharacterRow[];
   images: ImageRow[];
+  drawings?: DrawingRow[];
 };
 
 // shape of the character model that we get from the backend charactersendpoint with images linked to the character
@@ -310,6 +326,7 @@ export type CharacterDetailResponse = {
   scene: number | null;
   scenes?: number[];
   images: ImageRow[];
+  drawings?: DrawingRow[];
 };
 
 // Paginated response for the ideas list from /api/ideas/ 
@@ -433,6 +450,7 @@ export type CharacterCreateResponse = {
   scene: number | null;
   scenes?: number[];
   images: ImageRow[];
+  drawings?: DrawingRow[];
 };
 
 export async function createCharacter(
@@ -495,6 +513,29 @@ export async function createImageLink(
     throw new Error("Could not add image link");
   }
   return response.json() as Promise<ImageRow>; // return the created image data from the response
+}
+
+export async function createDrawing(
+  ideaId: number,
+  payload: {
+    title?: string;
+    scene_data: Record<string, unknown>;
+    thumbnail_data_url?: string;
+    scene?: number | null;
+    character?: number | null;
+  },
+): Promise<DrawingRow> {
+  /* Creates a drawing row with the Excalidraw scene JSON and a drawing preview image */
+
+  const response = await authFetch(`/api/ideas/${ideaId}/drawings/`, { // call the drawings endpoint to create a new drawing
+    method: "POST", // use the POST method to create a new drawing
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload), // send the new drawing data in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not create drawing");
+  }
+  return response.json() as Promise<DrawingRow>; // return the created drawing data from the response
 }
 
 export async function deleteIdea(id: number): Promise<void> {
@@ -610,6 +651,35 @@ export async function deleteImage(id: number): Promise<void> {
   throw new Error("Could not delete image");
 }
 
+export async function updateDrawing(
+  id: number,
+  payload: { title?: string; scene_data?: Record<string, unknown>; thumbnail_data_url?: string },
+): Promise<DrawingRow> {
+  /* Updates drawing title/scene data/thumbnail for one drawing row */
+
+  const response = await authFetch(`/api/drawings/${id}/`, { // call the drawings endpoint to update the drawing
+    method: "PATCH", // use the PATCH method to update the drawing
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload), // send the new drawing data in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not update drawing");
+  }
+  return response.json() as Promise<DrawingRow>;
+}
+
+export async function deleteDrawing(id: number): Promise<void> {
+  /* Deletes one drawing by id */
+
+  const response = await authFetch(`/api/drawings/${id}/`, { // call the drawings endpoint to delete the drawing
+    method: "DELETE", // use the DELETE method to delete the drawing
+  });
+  if (response.ok) {
+    return;
+  }
+  throw new Error("Could not delete drawing");
+}
+
 
 export async function getIdea(id: number): Promise<unknown> {
   /* Returns one idea with the attached scenes, characters, and images */
@@ -665,4 +735,20 @@ export async function getImage(id: number): Promise<ImageDetailResponse> {
     throw new Error("Couldn't get the image from the API");
   }
   return response.json() as Promise<ImageDetailResponse>;
+}
+
+// shape of one drawing detail response from drawings endpoint
+export type DrawingDetailResponse = DrawingRow;
+
+export async function getDrawing(id: number): Promise<DrawingDetailResponse> {
+  /* Returns one drawing row for the drawing detail editor page */
+
+  const response = await authFetch(`/api/drawings/${id}/`);
+  if (response.status === 404) {
+    throw new Error("Drawing not found");
+  }
+  if (!response.ok) {
+    throw new Error("Couldn't get the drawing from the API");
+  }
+  return response.json() as Promise<DrawingDetailResponse>;
 }

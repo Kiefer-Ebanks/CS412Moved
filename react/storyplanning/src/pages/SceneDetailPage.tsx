@@ -461,6 +461,48 @@ function SceneDetailPage() {
             )}
           </section>
 
+          <section style={{ marginTop: 24 }}>
+            <h2>Drawings in this scene</h2>
+            <p style={{ marginTop: 0, color: "#555" }}>
+              Create drawings and reopen them later to continue editing.
+            </p>
+            <p>
+              <strong>Create a new drawing</strong>
+              {"  "}
+              <Link
+                to={`/ideas/${scene.idea}/drawings/new?sceneId=${scene.id}`}
+                state={{ from: `${location.pathname}${location.search}` }}>
+                &rarr;
+              </Link>
+            </p>
+            {scene.drawings && scene.drawings.length > 0 ? (
+              <ul style={{ listStyle: "none", padding: 0 }}>
+                {scene.drawings.map((drawing) => (
+                  <li key={drawing.id} style={{ marginBottom: 16 }}>
+                    <Link
+                      to={`/drawings/${drawing.id}`}
+                      state={{ from: `${location.pathname}${location.search}` }
+                      }
+                      style={{ textDecoration: "none", color: "inherit" }}>
+                      {drawing.thumbnail_data_url ? (
+                        <img
+                          src={drawing.thumbnail_data_url}
+                          alt={drawing.title?.trim() ? drawing.title : "drawing thumbnail"}
+                          style={{ maxWidth: "100%", maxHeight: 180, display: "block", border: "1px solid #ddd", borderRadius: 6 }}
+                        />
+                      ) : null}
+                      <p style={{ marginTop: 8 }}>
+                        {drawing.title?.trim() ? drawing.title : `Drawing #${drawing.id}`}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No drawings linked to this scene yet</p>
+            )}
+          </section>
+
           <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
             <h2 style={{ color: "#8b0000" }}>Delete scene</h2>
             <p>This removes the scene and related scene data. This cannot be undone.</p>

@@ -14,6 +14,7 @@ import {
   updateIdeaTitle,
   updateCharacterName,
   updateSceneTitle,
+  type DrawingRow,
   type ImageRow,
 } from "../api";
 
@@ -42,6 +43,7 @@ type IdeaDetail = {
   scenes?: SceneRow[];
   characters?: CharacterRow[];
   images?: ImageRow[];
+  drawings?: DrawingRow[];
 };
 
 type FromState = {
@@ -534,6 +536,47 @@ function IdeaDetailPage() {
               </ul>
             ) : (
               <p>No images yet</p>
+            )}
+          </section>
+
+          <section style={{ marginTop: 24 }}>
+            <h2>Drawings</h2>
+            <p style={{ marginTop: 0, color: "#555" }}>
+              Create drawings and reopen them later to continue editing.
+            </p>
+            <p>
+              <strong>Create a new drawing</strong>
+              {"  "}
+              <Link
+                to={`/ideas/${idea.id}/drawings/new`}
+                state={{ from: `${location.pathname}${location.search}` }}>
+                &rarr;
+              </Link>
+            </p>
+            {idea.drawings && idea.drawings.length > 0 ? (
+              <ul style={{ listStyle: "none", padding: 0 }}>
+                {idea.drawings.map((drawing) => (
+                  <li key={drawing.id} style={{ marginBottom: 16 }}>
+                    <Link
+                      to={`/drawings/${drawing.id}`}
+                      state={{ from: `${location.pathname}${location.search}` }}
+                      style={{ textDecoration: "none", color: "inherit" }}>
+                      {drawing.thumbnail_data_url ? (
+                        <img
+                          src={drawing.thumbnail_data_url}
+                          alt={drawing.title?.trim() ? drawing.title : "drawing thumbnail"}
+                          style={{ maxWidth: "100%", maxHeight: 180, display: "block", border: "1px solid #ddd", borderRadius: 6 }}
+                        />
+                      ) : null}
+                      <p style={{ marginTop: 8 }}>
+                        {drawing.title?.trim() ? drawing.title : `Drawing #${drawing.id}`}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No drawings yet</p>
             )}
           </section>
 
