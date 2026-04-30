@@ -359,6 +359,20 @@ export async function updateSceneTitle(id: number, title: string): Promise<Scene
   return response.json() as Promise<SceneDetailResponse>; // return the updated scene title
 }
 
+export async function updateIdeaStoryboard(id: number, storyboard: string): Promise<IdeaListItem> {
+  /* Updates only storyboard text using a PATCH request to the ideas endpoint */
+
+  const response = await authFetch(`/api/ideas/${id}/`, { // call the ideas endpoint to update the storyboard
+    method: "PATCH", // use the PATCH method to update the storyboard
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ storyboard }),
+  });
+  if (!response.ok) {
+    throw new Error("Could not update storyboard");
+  }
+  return response.json() as Promise<IdeaListItem>;
+}
+
 export async function createIdea(title: string, storyboard = ""): Promise<IdeaListItem> {
   /* Creates a new idea and returns the created idea */
 

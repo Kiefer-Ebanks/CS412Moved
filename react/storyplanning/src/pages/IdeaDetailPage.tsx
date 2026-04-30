@@ -10,6 +10,7 @@ import {
   deleteIdea,
   getIdea,
   resolveImageSrcForDisplay,
+  updateIdeaStoryboard,
   updateIdeaTitle,
   updateSceneTitle,
   type ImageRow,
@@ -61,6 +62,9 @@ function IdeaDetailPage() {
   const [editingIdeaTitle, setEditingIdeaTitle] = useState(false); // inline edit mode state for idea title
   const [ideaTitleDraft, setIdeaTitleDraft] = useState(""); // the current draft text of the idea title input field before it is saved
   const [ideaTitleBusy, setIdeaTitleBusy] = useState(false); // state for the idea title update request status
+  const [storyboardDraft, setStoryboardDraft] = useState(""); // always-editable storyboard text area draft
+  const [storyboardBusy, setStoryboardBusy] = useState(false); // state for storyboard save request status
+  const [storyboardMessage, setStoryboardMessage] = useState(""); // short success text after storyboard save
   const [editingSceneId, setEditingSceneId] = useState<number | null>(null); // state of the scene row that is currently in edit mode
   const [sceneTitleDraft, setSceneTitleDraft] = useState(""); // the current draft text of the scene title input field before it is saved
   const [sceneTitleBusyId, setSceneTitleBusyId] = useState<number | null>(null); // state for the scene title update request status
@@ -76,6 +80,7 @@ function IdeaDetailPage() {
       try {
         const data = (await getIdea(pk)) as IdeaDetail;
         setIdea(data);
+        setStoryboardDraft(data.storyboard ?? ""); // initialize editor with current storyboard text from the backend
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Failed to load the idea";
@@ -115,7 +120,7 @@ function IdeaDetailPage() {
     setIdeaTitleBusy(true);
     try {
       const updated = await updateIdeaTitle(idea.id, trimmed);
-      setIdea({ ...idea, title: updated.title }); // update the local list of ideas with the new title after the server confirms the update
+      setIdea({ ...idea, title: updated.title, timestamp: updated.timestamp }); // updating the title and timestamp so "Last updated" refreshes immediately
       setEditingIdeaTitle(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update idea title");
@@ -181,6 +186,28 @@ function IdeaDetailPage() {
     }
   }
 
+  async function handleSaveStoryboard() {
+    // saves the storyboard from the inline edit to the server and update the local list of ideas
+    
+    if (!idea) return;
+    setStoryboardMessage(""); // clear any previous success messages
+    setStoryboardBusy(true); // set the storyboard busy state to true
+    try {
+      const updated = await updateIdeaStoryboard(idea.id, storyboardDraft); // update the storyboard on the server
+      
+      // keep local idea object in sync so other sections show current text if needed
+      setIdea({ ...idea, storyboard: updated.storyboard, timestamp: updated.timestamp }); // updating the storyboard and timestamp so "Last updated" refreshes immediately
+      setStoryboardMessage("Storyboard saved."); // set the success message to "Storyboard saved."
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update storyboard");
+    } finally {
+      setStoryboardBusy(false);
+    }
+  }
+
+  // show "Unsaved changes" when editor text differs from the saved storyboard on the idea object
+  const storyboardDirty = idea ? storyboardDraft !== (idea.storyboard ?? "") : false;
+
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
       <p>
@@ -233,9 +260,35 @@ function IdeaDetailPage() {
           </p>
           <section style={{ marginTop: 24 }}>
             <h2>Storyboard</h2>
-            <p style={{ whiteSpace: "pre-wrap" }}>
-              {idea.storyboard || "No storyboard"}
+            <p style={{ marginTop: 0, color: "#555" }}>
+              Click in and edit freely. Changes save only when you click Save changes.
             </p>
+            {/* fixed-height "document window" so long text scrolls inside this panel */}
+            <div style={{ height: 340, border: "1px solid #ddd", borderRadius: 6, overflow: "auto" }}>
+              <textarea
+                value={storyboardDraft}
+                onChange={(e) => setStoryboardDraft(e.target.value)}
+                placeholder="Write your storyboard..."
+                style={{
+                  width: "100%",
+                  minHeight: "100%",
+                  border: "none",
+                  outline: "none",
+                  resize: "none",
+                  padding: 12,
+                  font: "inherit",
+                  lineHeight: 1.45,
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+              {storyboardDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              <button type="button" onClick={() => void handleSaveStoryboard()} disabled={storyboardBusy}>
+                {storyboardBusy ? "Saving..." : "Save changes"}
+              </button>
+              {storyboardMessage ? <span style={{ color: "green" }}>{storyboardMessage}</span> : null}
+            </div>
           </section>
 
           <section style={{ marginTop: 24 }}>
