@@ -1,21 +1,61 @@
-// Account settings: change password or delete account (calls storyplanning account API endpoints)
+// File: AccountPage.tsx
+// Author: Kiefer Ebanks (kebanks@bu.edu), 4/29/2026
+// This page allows users to change their password or delete their account
+// It also allows the user to logout and navigate back to the login page
+
 
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { changePassword, clearToken, deleteAccount } from "../api";
+import {
+  changePassword,
+  changeUsername,
+  clearToken,
+  deleteAccount,
+  getStoredUsername,
+} from "../api";
 
 function AccountPage() {
   const navigate = useNavigate();
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [pwBusy, setPwBusy] = useState(false);
-  const [pwMessage, setPwMessage] = useState("");
-  const [pwError, setPwError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState(""); // state to store the current password
+  const [newPassword, setNewPassword] = useState(""); // state to store the new password
+  const [confirmPassword, setConfirmPassword] = useState(""); // state to store the second new password to confirm the new password
+  const [pwBusy, setPwBusy] = useState(false); // state to store the password update status
+  const [pwMessage, setPwMessage] = useState(""); // state to store the password update message
+  const [pwError, setPwError] = useState(""); // state to store any password update errors
 
-  const [delBusy, setDelBusy] = useState(false);
-  const [delError, setDelError] = useState("");
+  const [newUsername, setNewUsername] = useState(""); // state to store the new username
+  const [unameBusy, setUnameBusy] = useState(false); // state to store the username update status
+  const [unameMessage, setUnameMessage] = useState(""); // state to store the username update message
+  const [unameError, setUnameError] = useState(""); // state to store any username update errors
+
+  const [delBusy, setDelBusy] = useState(false); // state to store the delete busy status
+  const [delError, setDelError] = useState(""); // state to store any delete account errors
+  const [displayName, setDisplayName] = useState(getStoredUsername() ?? "Account"); // Account name heading text
+
+  async function handleUsernameSubmit(e: FormEvent<HTMLFormElement>) {
+    /* changing a user's username without requiring old username */
+
+    e.preventDefault();
+    setUnameError("");
+    setUnameMessage("");
+    const trimmed = newUsername.trim();
+    if (!trimmed) {
+      setUnameError("Enter a username");
+      return;
+    }
+    setUnameBusy(true);
+    try {
+      const updated = await changeUsername(trimmed);
+      setUnameMessage(`Username updated to ${updated}`); // show the new username in the username update message to let user know the username was updated successfully
+      setDisplayName(updated); // show the new username in the account page heading immediately
+      setNewUsername("");
+    } catch (err) {
+      setUnameError(err instanceof Error ? err.message : "Could not update username");
+    } finally {
+      setUnameBusy(false);
+    }
+  }
 
   async function handlePasswordSubmit(e: FormEvent<HTMLFormElement>) {
     /* changing a user's password */
@@ -73,8 +113,28 @@ function AccountPage() {
         <Link to="/ideas">&larr; Back to ideas</Link>
       </p>
 
-      <h1>Account</h1>
-      <p>Update your password or delete your account.</p>
+      <h1>{displayName}'s Account</h1>
+      <p>Update your username and password or delete your account.</p>
+
+      <section style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #ddd" }}>
+        <h2 style={{ fontSize: "1.1rem" }}>Change username</h2>
+        <form onSubmit={handleUsernameSubmit}>
+          <label htmlFor="new-username">New username</label>
+          <input
+            id="new-username"
+            type="text"
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+            required
+            style={{ display: "block", width: "100%", marginBottom: 12 }}
+          />
+          {unameError ? <p style={{ color: "crimson" }}>{unameError}</p> : null}
+          {unameMessage ? <p style={{ color: "green" }}>{unameMessage}</p> : null}
+          <button type="submit" disabled={unameBusy}>
+            {unameBusy ? "Saving…" : "Update username"}
+          </button>
+        </form>
+      </section>
 
       <section style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #ddd" }}>
         <h2 style={{ fontSize: "1.1rem" }}>Change password</h2>

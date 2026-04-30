@@ -30,6 +30,9 @@ export function resolveImageSrcForDisplay(
 // localStorage key used to persist auth token, this is used to store the token in the browser's localStorage
 const TOKEN_KEY = "storyplanning_token";
 
+// localStorage key for username so pages can display account name without an extra API call
+const USERNAME_KEY = "storyplanning_username";
+
 // this is the shape of the response from the auth endpoints
 type AuthResponse = {
   token: string;
@@ -37,33 +40,31 @@ type AuthResponse = {
   username: string;
 };
 
-/*
- * Returns saved token, or null if user is logged out
- */
+/* Returns saved token, or null if user is logged out */
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-/*
- * Saves token after login or register succeeds
- */
+/* Saves token after login or register succeeds */
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
-/*
- * Clears token from storage for logout
- */
+/* Clears token from storage for logout */
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USERNAME_KEY);
 }
 
-/*
- * Sends login credentials and stores returned token
- */
+/* Returns the saved username from localStorage */
+export function getStoredUsername(): string | null {
+  return localStorage.getItem(USERNAME_KEY);
+}
+
+/* Sends login credentials and stores returned token */
 export async function login(username: string, password: string): Promise<AuthResponse> {
   
-  // Call token login endpoint to send the login credentials and store the returned token
+  // call the token login endpoint to send the login credentials and store the returned token
   const response = await fetch(`${API_BASE}/api/login/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -84,6 +85,10 @@ export async function login(username: string, password: string): Promise<AuthRes
 
   // Save token for future authenticated requests
   setToken(data.token);
+  if (typeof data.username === "string") {
+    localStorage.setItem(USERNAME_KEY, data.username);
+  }
+
   return data as AuthResponse;
 }
 
@@ -115,6 +120,9 @@ export async function register(
 
   // Save token for future authenticated requests
   setToken(data.token);
+  if (typeof data.username === "string") {
+    localStorage.setItem(USERNAME_KEY, data.username);
+  }
   return data as AuthResponse;
 }
 
@@ -149,6 +157,39 @@ export async function changePassword(
           : "Could not update password";
     throw new Error(msg);
   }
+}
+
+export async function changeUsername(newUsername: string): Promise<string> {
+  /* Changing the authenticated user's username*/
+
+  const response = await authFetch("/api/account/username/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ new_username: newUsername }),
+  });
+  let data: Record<string, unknown> = {};
+  try {
+    data = (await response.json()) as Record<string, unknown>;
+  } catch {
+    // response.json() fails when the body is empty or not JSON so we can just leave data {} and use the generic message below
+  }
+  if (!response.ok) {
+    const msg =
+      typeof data.error === "string"
+        ? data.error
+        : typeof data.detail === "string"
+          ? data.detail
+          : "Could not update username";
+    throw new Error(msg);
+  }
+  
+  // ensure that the username is returned
+  if (typeof data.username !== "string") {
+    throw new Error("Username update response was missing username");
+  }
+  // keep stored username in sync after update so the account page heading with the account name updates immediately
+  localStorage.setItem(USERNAME_KEY, data.username);
+  return data.username;
 }
 
 export async function deleteAccount(): Promise<void> {
