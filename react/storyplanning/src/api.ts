@@ -404,6 +404,23 @@ export async function createIdea(title: string, storyboard = ""): Promise<IdeaLi
   return response.json() as Promise<IdeaListItem>;
 }
 
+export async function createScene(
+  ideaId: number,
+  payload: { title: string; outline?: string; script?: string },
+): Promise<SceneDetailResponse> {
+  /* Creates a scene for one idea via POST /api/ideas/:ideaId/scenes/ */
+
+  const response = await authFetch(`/api/ideas/${ideaId}/scenes/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Could not create scene");
+  }
+  return response.json() as Promise<SceneDetailResponse>;
+}
+
 export async function deleteIdea(id: number): Promise<void> {
   /* Deletes an idea and the backend cascades the delete to all related scenes, characters, and images*/
 

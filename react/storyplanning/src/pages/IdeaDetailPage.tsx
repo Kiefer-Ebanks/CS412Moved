@@ -295,6 +295,13 @@ function IdeaDetailPage() {
             <h2>Scenes</h2>
             {idea.scenes && idea.scenes.length > 0 ? (
               <ul>
+                {/* create-scene row, formatted like list rows but the text is not editable */}
+                <li style={{ marginBottom: 12 }}>
+                  <strong>Create a new scene</strong>
+                  {"  "}
+                  <Link to={`/ideas/${idea.id}/scenes/new`}>&rarr;</Link>
+                </li>
+
                 {idea.scenes.map((s) => (
                   <li key={s.id}>
                     {editingSceneId === s.id ? (
@@ -337,7 +344,14 @@ function IdeaDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>No scenes yet</p>
+              <>
+                <p>No scenes yet</p>
+                <p>
+                  <strong>Create a new scene</strong>
+                  {"  "}
+                  <Link to={`/ideas/${idea.id}/scenes/new`}>&rarr;</Link>
+                </p>
+              </>
             )}
           </section>
 
