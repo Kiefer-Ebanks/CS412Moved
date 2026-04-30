@@ -200,17 +200,19 @@ function DrawingDetailPage() {
       {drawing ? (
         <>
           <h1>Drawing editor</h1>
-          <p>
+          <p style={{ marginBottom: "3rem" }}>
             <strong>Last updated:</strong> {formatTimestamp(drawing.timestamp)}
           </p>
 
-          <label htmlFor="drawing-title">Title (optional)</label>
+          <label htmlFor="drawing-title" style={{ fontSize: "1.1rem" }}>
+            Title (optional)
+          </label>
           <input
             id="drawing-title"
             type="text"
             value={titleDraft}
             onChange={(e) => setTitleDraft(e.target.value)}
-            placeholder="e.g. Scene moodboard"
+            placeholder="ex: Scene moodboard"
             style={{ display: "block", width: "100%", marginBottom: 12 }}
           />
 
