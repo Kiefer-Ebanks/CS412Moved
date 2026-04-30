@@ -67,7 +67,7 @@ function IdeasPage() {
 
   return (
     <main style={{ maxWidth: 880, margin: "2rem auto", padding: "0 1rem" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>Your ideas</h1>
+      <h1 style={{ textAlign: "center", marginBottom: "1rem", fontSize: "2.7rem" }}>Your ideas</h1>
 
       {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
 
@@ -91,21 +91,6 @@ function IdeasPage() {
             maxHeight: "60vh",
             overflowY: "auto",
           }}>
-          {/* create-idea row is first row inside the ideas box */}
-          <li
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0.95rem 1rem",
-              borderBottom: "1px solid var(--border)",
-            }}>
-            <strong>Create a new idea</strong>
-            <Link to="/ideas/new" style={{ textDecoration: "none", fontSize: "1.3rem", lineHeight: 1 }}>
-              &rarr;
-            </Link>
-          </li>
-
           {ideas?.results.map((idea) => (
             <li
               key={idea.id}
@@ -154,6 +139,30 @@ function IdeasPage() {
             <li style={{ padding: "0.95rem 1rem", color: "var(--text-muted)" }}>No ideas yet</li>
           ) : null}
         </ul>
+      </section>
+
+      {/* create-idea row as its own box just below the ideas list */}
+      <section
+        style={{
+          margin: "0.9rem auto 0",
+          maxWidth: 760,
+          border: "1px solid var(--border)",
+          borderRadius: 18,
+          background: "var(--surface)",
+          boxShadow: "0 10px 22px rgba(20, 20, 30, 0.1), 0 2px 5px rgba(20, 20, 30, 0.07)",
+        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0.95rem 1rem",
+          }}>
+          <strong>Create a new idea</strong>
+          <Link to="/ideas/new" style={{ textDecoration: "none", fontSize: "1.3rem", lineHeight: 1 }}>
+            &rarr;
+          </Link>
+        </div>
       </section>
     </main>
   );
