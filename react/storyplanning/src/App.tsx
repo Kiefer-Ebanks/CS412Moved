@@ -37,17 +37,9 @@ function AuthenticatedLayout() {
   return (
     <>
       {/* Shared top bar for authenticated non-create pages */}
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "1rem",
-          borderBottom: "1px solid #ddd",
-          marginBottom: "1rem",
-        }}>
-        <h2 style={{ margin: 0 }}>FilmBoard</h2>
-        <Link to="/account" style={{ textDecoration: "none" }}>
+      <header className="app-shell-header">
+        <h2 className="app-shell-title">FilmBoard</h2>
+        <Link to="/account" className="app-shell-account-link"> {/* Link to the account page */}
           {username ?? "Account"}
         </Link>
       </header>
@@ -130,7 +122,7 @@ function App() {
           }
         />
 
-        {/* All pages use this shared page header */}
+        {/* All pages use this shared page header and inherit the layout similar to the base.html template for django pages */}
         <Route
           element={
             <RequireAuth>

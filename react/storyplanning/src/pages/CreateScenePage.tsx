@@ -37,7 +37,7 @@ function CreateScenePage() {
         outline,
         script,
       });
-      // after creating a scene, set Back target to its parent idea (not the create form page)
+      // after creating a scene, set Back target to its parent idea and not the create form page
       navigate(`/scenes/${created.id}`, {
         state: { from: `/ideas/${ideaId}` },
         replace: true,

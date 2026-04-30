@@ -46,8 +46,8 @@ function CreateImageUploadPage() {
         scene: Number.isNaN(sceneId) ? null : sceneId,
         character: Number.isNaN(characterId) ? null : characterId,
       });
-      // after creating an image, Back should prefer character, then scene, then idea
-      const parentTarget =
+      // after creating an image, the back button should go back to a character, then scene, then idea
+      const parentTarget = // determine the parent target based on the created image's character and scene
         created.character != null
           ? `/characters/${created.character}`
           : created.scene != null
