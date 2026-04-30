@@ -14,7 +14,7 @@ function IdeasPage() {
   const [editingIdeaId, setEditingIdeaId] = useState<number | null>(null); // which idea title is in inline-edit mode
   const [editingTitle, setEditingTitle] = useState(""); // current text in inline title input
   const [titleBusyId, setTitleBusyId] = useState<number | null>(null); // keep only one title-save in progress at a time
-  const rowClickTimerRef = useRef<number | null>(null); // click timer so double-click can cancel single-click navigation
+  const rowClickTimerRef = useRef<number | null>(null); // click timer so double-click can cancel single-click navigation so users can double-click to edit the title of an idea
 
   useEffect(() => {
     async function loadIdeas() {
@@ -43,7 +43,7 @@ function IdeasPage() {
   }
 
   function handleIdeaRowClick(ideaId: number) {
-    // single-click on a row opens the idea detail page; delayed slightly so double-click can switch into edit mode
+    // single-click on a row opens the idea detail page. It is delayed slightly so double-click can switch into edit mode
     if (editingIdeaId != null) return;
     if (rowClickTimerRef.current != null) {
       window.clearTimeout(rowClickTimerRef.current);
@@ -112,7 +112,7 @@ function IdeasPage() {
           {ideas?.results.map((idea) => (
             <li
               key={idea.id}
-              onClick={() => handleIdeaRowClick(idea.id)}
+              onClick={() => handleIdeaRowClick(idea.id)} // single-click on a row opens the idea detail page
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -127,7 +127,7 @@ function IdeasPage() {
                   autoFocus
                   value={editingTitle}
                   onChange={(e) => setEditingTitle(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()} 
                   disabled={titleBusyId === idea.id}
                   onBlur={() => void saveInlineTitle(idea.id, idea.title)}
                   onKeyDown={(e) => {

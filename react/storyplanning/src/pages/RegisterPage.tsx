@@ -1,3 +1,7 @@
+// File: RegisterPage.tsx
+// Author: Kiefer Ebanks (kebanks@bu.edu), 4/17/2026
+// Form to allow a user to create a new account. It then takes them to the ideas list page
+
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,6 +15,7 @@ function RegisterPage() {
   const [error, setError] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    // creates a new account and then goes to the ideas page
     event.preventDefault();
     setError("");
     setLoading(true);

@@ -23,6 +23,8 @@ import AccountPage from "./pages/AccountPage.tsx";
 import SceneDetailPage from "./pages/SceneDetailPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
+  // ensures that the user is authenticated before accessing the page
+  // otherwise it will redirect them to the login page
   if (!getToken()) {
     return <Navigate to="/login" replace />;
   }
@@ -90,6 +92,8 @@ function AuthenticatedLayout() {
 }
 
 function App() {
+  // this is the top-level router: each page shares the same header and layout and is protected by the RequireAuth component
+  
   return (
     <BrowserRouter>
       <Routes>
