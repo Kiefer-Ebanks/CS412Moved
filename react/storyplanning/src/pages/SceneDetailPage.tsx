@@ -3,7 +3,7 @@
 // Description: This page displays the details of a single scene, including title, outline, script, characters, and images
 
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   clearToken,
   getScene,
@@ -16,6 +16,7 @@ function SceneDetailPage() {
   // Get the scene id from the URL and setup navigation
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); // get the current page location
 
   // State for the scene detail response and error text
   const [scene, setScene] = useState<SceneDetailResponse | null>(null);
@@ -87,7 +88,14 @@ function SceneDetailPage() {
               <ul>
                 {scene.characters.map((character) => (
                   <li key={character.id}>
-                    <strong>{character.name}</strong>
+                    <Link
+                      // clicking the character name takes the user to the character detail page
+                      to={`/characters/${character.id}`}
+                      // save the current page location in the state so the user can be redirected back to it after going to the character detail page
+                      state={{ from: `${location.pathname}${location.search}` }}
+                    >
+                      <strong>{character.name}</strong>
+                    </Link>
                     {character.description ? (
                       <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
                         {character.description}

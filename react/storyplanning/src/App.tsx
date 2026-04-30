@@ -10,6 +10,7 @@ import IdeaDetailPage from "./pages/IdeaDetailPage.tsx";
 import IdeasPage from "./pages/IdeasPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
+import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
 import SceneDetailPage from "./pages/SceneDetailPage";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,16 @@ function App() {
           element={
             <RequireAuth>
               <SceneDetailPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for the character detail page */}
+        <Route
+          path="/characters/:id"
+          element={
+            <RequireAuth>
+              <CharacterDetailPage />
             </RequireAuth>
           }
         />

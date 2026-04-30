@@ -4,7 +4,7 @@
 // It also allows the user to logout and navigate back to the ideas list
 
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { clearToken, getIdea, resolveImageSrcForDisplay } from "../api";
 
 // scene row object from IdeaSerializer
@@ -46,6 +46,7 @@ function IdeaDetailPage() {
 
   const { id } = useParams(); // get the idea id from the URL
   const navigate = useNavigate(); // navigate to the idea detail page
+  const location = useLocation(); // get the current page location
 
   // State for the idea detail
   const [idea, setIdea] = useState<IdeaDetail | null>(null); // the idea detail object
@@ -135,7 +136,14 @@ function IdeaDetailPage() {
               <ul>
                 {idea.characters.map((c) => (
                   <li key={c.id}>
-                    <strong>{c.name}</strong>
+                    <Link
+                      // clicking the character name takes the user to the character detail page
+                      to={`/characters/${c.id}`}
+                      // save the current page location in the state so the user can be redirected back to it after going to the character detail page
+                      state={{ from: `${location.pathname}${location.search}` }}
+                    >
+                      <strong>{c.name}</strong>
+                    </Link>
                     {c.description ? (
                       <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
                         {c.description}

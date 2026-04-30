@@ -199,6 +199,17 @@ export type SceneDetailResponse = {
   images: SceneImageRow[];
 };
 
+// shape of the character model that we get from the backend /api/characters/:id/ endpoint with images linked to the character
+export type CharacterDetailResponse = {
+  id: number;
+  name: string;
+  description?: string;
+  timestamp: string;
+  idea: number;
+  scene: number | null;
+  images: SceneImageRow[];
+};
+
 // Paginated response for the ideas list from /api/ideas/ 
 export type IdeasListResponse = {
   count: number;
@@ -245,4 +256,17 @@ export async function getScene(id: number): Promise<SceneDetailResponse> {
     throw new Error("Couldn't get the scene from the API");
   }
   return response.json() as Promise<SceneDetailResponse>;
+}
+
+export async function getCharacter(id: number): Promise<CharacterDetailResponse> {
+  /* Returns one character */
+
+  const response = await authFetch(`/api/characters/${id}/`); // fetches from the characters endpoint to get the character
+  if (response.status === 404) {
+    throw new Error("Character not found");
+  }
+  if (!response.ok) {
+    throw new Error("Couldn't get the character from the API");
+  }
+  return response.json() as Promise<CharacterDetailResponse>;
 }
