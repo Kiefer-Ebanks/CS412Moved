@@ -5,9 +5,11 @@
 import { useEffect, useState } from "react";
 import {
   clearToken,
+  deleteImage,
   getImage,
   resolveImageSrcForDisplay,
   type ImageDetailResponse,
+  updateImageDescription,
 } from "../api";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -25,6 +27,10 @@ function ImageDetailPage() {
 
   const [image, setImage] = useState<ImageDetailResponse | null>(null); // state to store the image
   const [error, setError] = useState(""); // state to store any errors
+  const [descriptionDraft, setDescriptionDraft] = useState(""); // always-editable draft text for image description
+  const [descriptionBusy, setDescriptionBusy] = useState(false); // tracks save request state for description
+  const [descriptionMessage, setDescriptionMessage] = useState(""); // short success text after description save
+  const [deleteBusy, setDeleteBusy] = useState(false); // tracks delete request state for this image
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN; // get the image id from the route
@@ -37,6 +43,7 @@ function ImageDetailPage() {
       try {
         const data = await getImage(pk);
         setImage(data);
+        setDescriptionDraft(data.description ?? ""); // initialize the description editor with the current description text from the backend
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Couldn't load the image";
@@ -60,7 +67,56 @@ function ImageDetailPage() {
     navigate("/login");
   }
 
+  async function handleSaveDescription() {
+    // saves the current description draft only when user explicitly clicks Save changes
+    if (!image || descriptionBusy) {
+      return;
+    }
+    setDescriptionBusy(true);
+    setDescriptionMessage("");
+    setError("");
+    try {
+      const updated = await updateImageDescription(image.id, descriptionDraft);
+      setImage(updated);
+      setDescriptionDraft(updated.description ?? "");
+      setDescriptionMessage("Saved");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save description");
+    } finally {
+      setDescriptionBusy(false);
+    }
+  }
+
+  async function handleDeleteImage() {
+    // confirms and deletes this image then returns user to the last page they were on
+    if (!image || deleteBusy) {
+      return;
+    }
+
+    // confirm the deletion with the user with a confirmation dialog box
+    const confirmed = window.confirm(
+      "Delete this image? This cannot be undone.",
+    );
+    if (!confirmed) {
+      return;
+    }
+    setDeleteBusy(true);
+    setError("");
+    try {
+      await deleteImage(image.id); // call the delete image function to delete the image from the backend
+      if (from) {
+        navigate(from); // navigate to the last page the user was on
+      } else {
+        navigate(`/ideas/${image.idea}`); // navigate to the idea detail page
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete image");
+      setDeleteBusy(false);
+    }
+  }
+
   const src = image ? resolveImageSrcForDisplay(image.image) : undefined;
+  const descriptionDirty = image ? descriptionDraft !== (image.description ?? "") : false; // check if the description draft is different from the current description
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
@@ -95,9 +151,35 @@ function ImageDetailPage() {
             <p>No image URL (upload or URL may be missing).</p>
           )}
           <section style={{ marginTop: 24 }}>
-            <p style={{ whiteSpace: "pre-wrap" }}>
-              {image.description?.trim() ? image.description : "(no description)"}
+            <h2>Description</h2>
+            <p style={{ marginTop: 0, color: "#555" }}>
+              Edit freely. Changes save only when you press Save changes.
             </p>
+            <div style={{ height: 260, border: "1px solid #ddd", borderRadius: 6, overflow: "auto" }}>
+              <textarea
+                value={descriptionDraft}
+                onChange={(e) => setDescriptionDraft(e.target.value)}
+                placeholder="Write image description..."
+                style={{
+                  width: "100%",
+                  minHeight: "100%",
+                  border: "none",
+                  outline: "none",
+                  resize: "none",
+                  padding: 12,
+                  font: "inherit",
+                  lineHeight: 1.45,
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+              {descriptionDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              <button type="button" onClick={() => void handleSaveDescription()} disabled={descriptionBusy}>
+                {descriptionBusy ? "Saving..." : "Save changes"}
+              </button>
+              {descriptionMessage ? <span style={{ color: "green" }}>{descriptionMessage}</span> : null}
+            </div>
           </section>
           <nav style={{ marginTop: 16, fontSize: "0.9rem", color: "#555" }} aria-label="Related records">
             <strong>Go to:</strong>{" "}
@@ -130,6 +212,27 @@ function ImageDetailPage() {
               </>
             ) : null}
           </nav>
+
+          <section style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #ddd" }}>
+            <h3 style={{ marginTop: 0 }}>Delete image</h3>
+            <p style={{ color: "#555" }}>
+              This removes this image entry permanently.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleDeleteImage()}
+              disabled={deleteBusy}
+              style={{
+                background: "#b00020",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: 4,
+                cursor: deleteBusy ? "not-allowed" : "pointer",
+              }}>
+              {deleteBusy ? "Deleting..." : "Delete image"}
+            </button>
+          </section>
         </>
       ) : null}
     </main>

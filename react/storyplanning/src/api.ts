@@ -561,6 +561,35 @@ export async function updateCharacterDescription(
   return response.json() as Promise<CharacterCreateResponse>;
 }
 
+export async function updateImageDescription(
+  id: number,
+  description: string,
+): Promise<ImageDetailResponse> {
+  /* Updates only image description via PATCH /api/images/:id/ */
+
+  const response = await authFetch(`/api/images/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ description }),
+  });
+  if (!response.ok) {
+    throw new Error("Could not update image description");
+  }
+  return response.json() as Promise<ImageDetailResponse>;
+}
+
+export async function deleteImage(id: number): Promise<void> {
+  /* Deletes one image row by id */
+
+  const response = await authFetch(`/api/images/${id}/`, {
+    method: "DELETE",
+  });
+  if (response.ok) {
+    return;
+  }
+  throw new Error("Could not delete image");
+}
+
 
 export async function getIdea(id: number): Promise<unknown> {
   /* Returns one idea with the attached scenes, characters, and images */
