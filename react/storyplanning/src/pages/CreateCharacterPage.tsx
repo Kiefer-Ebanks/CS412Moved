@@ -45,7 +45,12 @@ function CreateCharacterPage() {
         // only send scene when valid since the user may not have created the character from the scene detail page
         scene: Number.isNaN(sceneId) ? null : sceneId,
       });
-      navigate(`/characters/${created.id}`);
+      // after creating a character, Back should go back to a scene, but if there isn't one it will go back to the idea
+      const parentTarget = created.scene != null ? `/scenes/${created.scene}` : `/ideas/${created.idea}`;
+      navigate(`/characters/${created.id}`, {
+        state: { from: parentTarget },
+        replace: true,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create character");
     } finally {

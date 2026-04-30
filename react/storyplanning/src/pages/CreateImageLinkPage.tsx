@@ -47,7 +47,17 @@ function CreateImageLinkPage() {
         scene: Number.isNaN(sceneId) ? null : sceneId,
         character: Number.isNaN(characterId) ? null : characterId,
       });
-      navigate(`/images/${created.id}`);
+      // after creating an image, the back button should go back to a character (if it exists), then scene (if it exists), then idea (if it exists)
+      const parentTarget = // determine the parent target based on the created image's character and scene
+        created.character != null
+          ? `/characters/${created.character}`
+          : created.scene != null
+            ? `/scenes/${created.scene}`
+            : `/ideas/${created.idea}`;
+      navigate(`/images/${created.id}`, {
+        state: { from: parentTarget },
+        replace: true,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add image link");
     } finally {

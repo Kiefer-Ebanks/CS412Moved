@@ -37,7 +37,11 @@ function CreateScenePage() {
         outline,
         script,
       });
-      navigate(`/scenes/${created.id}`);
+      // after creating a scene, set Back target to its parent idea (not the create form page)
+      navigate(`/scenes/${created.id}`, {
+        state: { from: `/ideas/${ideaId}` },
+        replace: true,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create scene");
     } finally {

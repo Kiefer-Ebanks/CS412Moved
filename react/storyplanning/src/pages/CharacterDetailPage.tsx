@@ -59,11 +59,21 @@ function CharacterDetailPage() {
   }, [id]);
 
   function handleBack() {
+    // if opened from another page, go there first (for normal cross-page navigation)
     if (from) {
       navigate(from);
       return;
     }
-    navigate(-1);
+    // fallback path avoids returning to create form: scene first when present, otherwise idea
+    if (character?.scene != null) {
+      navigate(`/scenes/${character.scene}`);
+      return;
+    }
+    if (character) {
+      navigate(`/ideas/${character.idea}`);
+      return;
+    }
+    navigate("/ideas");
   }
 
   function handleLogout() {

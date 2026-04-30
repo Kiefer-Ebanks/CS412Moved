@@ -55,11 +55,25 @@ function ImageDetailPage() {
   }, [id]);
 
   function handleBack() {
+    // if opened from another page, go there first (for normal cross-page navigation)
     if (from) {
       navigate(from);
       return;
     }
-    navigate(-1);
+    // fallback path avoids returning to create form: character first, then scene, then idea
+    if (image?.character != null) {
+      navigate(`/characters/${image.character}`);
+      return;
+    }
+    if (image?.scene != null) {
+      navigate(`/scenes/${image.scene}`);
+      return;
+    }
+    if (image) {
+      navigate(`/ideas/${image.idea}`);
+      return;
+    }
+    navigate("/ideas");
   }
 
   function handleLogout() {

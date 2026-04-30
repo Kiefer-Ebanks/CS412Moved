@@ -46,7 +46,17 @@ function CreateImageUploadPage() {
         scene: Number.isNaN(sceneId) ? null : sceneId,
         character: Number.isNaN(characterId) ? null : characterId,
       });
-      navigate(`/images/${created.id}`);
+      // after creating an image, Back should prefer character, then scene, then idea
+      const parentTarget =
+        created.character != null
+          ? `/characters/${created.character}`
+          : created.scene != null
+            ? `/scenes/${created.scene}`
+            : `/ideas/${created.idea}`;
+      navigate(`/images/${created.id}`, {
+        state: { from: parentTarget },
+        replace: true,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not upload image");
     } finally {
