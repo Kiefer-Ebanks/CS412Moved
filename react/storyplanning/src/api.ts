@@ -331,6 +331,20 @@ export async function getIdeas(): Promise<IdeasListResponse> {
   return response.json() as Promise<IdeasListResponse>;
 }
 
+export async function updateIdeaTitle(id: number, title: string): Promise<IdeaListItem> {
+  /* Updates only an idea title via a PATCH request to the ideas endpoint */
+
+  const response = await authFetch(`/api/ideas/${id}/`, { // call the ideas endpoint to update the idea title
+    method: "PATCH", // use the PATCH method to update the idea title
+    headers: { "Content-Type": "application/json" }, // set the content type to application/json
+    body: JSON.stringify({ title }), // send the new title in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not update title");
+  }
+  return response.json() as Promise<IdeaListItem>; // return the updated idea title
+}
+
 
 export async function getIdea(id: number): Promise<unknown> {
   /* Returns one idea with the attached scenes, characters, and images */
