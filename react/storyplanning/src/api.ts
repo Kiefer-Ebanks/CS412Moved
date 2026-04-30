@@ -449,6 +449,51 @@ export async function createCharacter(
   return response.json() as Promise<CharacterCreateResponse>;
 }
 
+export async function createImageUpload(
+  ideaId: number,
+  payload: { file: File; description?: string; scene?: number | null; character?: number | null },
+): Promise<ImageRow> {
+
+  /* Creates an image by file upload for one idea and optionally links it to a scene or character */
+
+  const form = new FormData();
+  form.append("image_file", payload.file);
+  form.append("description", payload.description ?? "");
+  if (payload.scene != null) {
+    form.append("scene", String(payload.scene));
+  }
+  if (payload.character != null) {
+    form.append("character", String(payload.character));
+  }
+
+  const response = await authFetch(`/api/ideas/${ideaId}/images/`, {
+    method: "POST", // use the POST method to create a new image
+    // we don't need to set the Content-Type header manually for multipart/form-data requests because the browser handles it automatically
+    body: form, // send the new image data in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not upload image");
+  }
+  return response.json() as Promise<ImageRow>; // return the created image data from the response
+}
+
+export async function createImageLink(
+  ideaId: number,
+  payload: { image_url: string; description?: string; scene?: number | null; character?: number | null },
+): Promise<ImageRow> {
+  /* Creates an image by URL and optionally links it to a scene or character */
+
+  const response = await authFetch(`/api/ideas/${ideaId}/images/`, { // call the ideas endpoint to create a new image
+    method: "POST", // use the POST method to create a new image
+    headers: { "Content-Type": "application/json" }, 
+    body: JSON.stringify(payload), // send the new image data in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not add image link");
+  }
+  return response.json() as Promise<ImageRow>; // return the created image data from the response
+}
+
 export async function deleteIdea(id: number): Promise<void> {
   /* Deletes an idea and the backend cascades the delete to all related scenes, characters, and images*/
 

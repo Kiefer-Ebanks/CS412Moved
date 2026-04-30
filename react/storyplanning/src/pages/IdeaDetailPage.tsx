@@ -72,6 +72,7 @@ function IdeaDetailPage() {
   const [editingCharacterId, setEditingCharacterId] = useState<number | null>(null); // state of the character row currently being renamed
   const [characterNameDraft, setCharacterNameDraft] = useState(""); // draft text for inline character rename input
   const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
+  const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -173,12 +174,15 @@ function IdeaDetailPage() {
   }
 
   function startCharacterNameEdit(character: CharacterRow) {
+    // enter edit mode when user double-clicks a character name
     setEditingCharacterId(character.id);
     setCharacterNameDraft(character.name);
     setError("");
   }
 
   async function saveCharacterName(character: CharacterRow) {
+    // saves the character name from the inline edit to the server and update the local list of characters
+
     if (!idea) return;
     const trimmed = characterNameDraft.trim();
     if (!trimmed) {
@@ -467,6 +471,42 @@ function IdeaDetailPage() {
 
           <section style={{ marginTop: 24 }}>
             <h2>Images</h2>
+            <div style={{ marginBottom: 10, position: "relative", display: "inline-block" }}>
+              {/* Add image trigger toggles menu with upload vs link choices */}
+              <button type="button" onClick={() => setShowAddImageMenu((v) => !v)}>
+                Add an image
+              </button>
+              {showAddImageMenu ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: 6,
+                    border: "1px solid #ddd",
+                    borderRadius: 6,
+                    background: "#fff",
+                    padding: "8px 10px",
+                    minWidth: 170,
+                    zIndex: 1,
+                  }}>
+                  <div>
+                    <Link
+                      to={`/ideas/${idea.id}/images/new/upload`}
+                      state={{ from: `${location.pathname}${location.search}` }}>
+                      Upload a photo
+                    </Link>
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    <Link
+                      to={`/ideas/${idea.id}/images/new/link`}
+                      state={{ from: `${location.pathname}${location.search}` }}>
+                      Add a link
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
+            </div>
             {idea.images && idea.images.length > 0 ? (
               <ul style={{ listStyle: "none", padding: 0 }}>
                 {idea.images.map((img) => (

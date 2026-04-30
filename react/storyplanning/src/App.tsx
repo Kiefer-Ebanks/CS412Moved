@@ -11,6 +11,8 @@ import IdeasPage from "./pages/IdeasPage.tsx";
 import CreateIdeaPage from "./pages/CreateIdeaPage.tsx";
 import CreateScenePage from "./pages/CreateScenePage.tsx";
 import CreateCharacterPage from "./pages/CreateCharacterPage.tsx";
+import CreateImageUploadPage from "./pages/CreateImageUploadPage.tsx";
+import CreateImageLinkPage from "./pages/CreateImageLinkPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
@@ -75,6 +77,26 @@ function App() {
           element={
             <RequireAuth>
               <CreateCharacterPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for adding an uploaded image under a specific idea */}
+        <Route
+          path="/ideas/:id/images/new/upload"
+          element={
+            <RequireAuth>
+              <CreateImageUploadPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for adding an image by URL under a specific idea */}
+        <Route
+          path="/ideas/:id/images/new/link"
+          element={
+            <RequireAuth>
+              <CreateImageLinkPage />
             </RequireAuth>
           }
         />
