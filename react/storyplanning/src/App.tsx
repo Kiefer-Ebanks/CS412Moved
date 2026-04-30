@@ -10,6 +10,7 @@ import IdeaDetailPage from "./pages/IdeaDetailPage.tsx";
 import IdeasPage from "./pages/IdeasPage.tsx";
 import CreateIdeaPage from "./pages/CreateIdeaPage.tsx";
 import CreateScenePage from "./pages/CreateScenePage.tsx";
+import CreateCharacterPage from "./pages/CreateCharacterPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
@@ -64,6 +65,16 @@ function App() {
           element={
             <RequireAuth>
               <CreateScenePage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for creating a new character for a specific idea */}
+        <Route
+          path="/ideas/:id/characters/new"
+          element={
+            <RequireAuth>
+              <CreateCharacterPage />
             </RequireAuth>
           }
         />

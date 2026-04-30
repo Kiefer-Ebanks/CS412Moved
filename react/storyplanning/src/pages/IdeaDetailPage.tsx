@@ -349,7 +349,7 @@ function IdeaDetailPage() {
                 <p>
                   <strong>Create a new scene</strong>
                   {"  "}
-                  <Link to={`/ideas/${idea.id}/scenes/new`}>&rarr;</Link>
+                  <Link to={`/ideas/${idea.id}/scenes/new`}>&rarr;</Link> {/* link to the create scene page */}
                 </p>
               </>
             )}
@@ -359,6 +359,17 @@ function IdeaDetailPage() {
             <h2>Characters</h2>
             {idea.characters && idea.characters.length > 0 ? (
               <ul>
+                {/* create-character row, formatted like list rows but intentionally not editable */}
+                <li style={{ marginBottom: 12 }}>
+                  <strong>Create a new character</strong>
+                  {"  "}
+                  <Link
+                    to={`/ideas/${idea.id}/characters/new`}
+                    state={{ from: `${location.pathname}${location.search}` }}>
+                    &rarr;
+                  </Link>
+                </li>
+
                 {idea.characters.map((c) => (
                   <li key={c.id}>
                     <Link
@@ -373,7 +384,18 @@ function IdeaDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>No characters yet</p>
+              <>
+                <p>No characters yet</p>
+                <p>
+                  <strong>Create a new character</strong>
+                  {"  "}
+                  <Link
+                    to={`/ideas/${idea.id}/characters/new`}
+                    state={{ from: `${location.pathname}${location.search}` }}>
+                    &rarr;
+                  </Link>
+                </p>
+              </>
             )}
           </section>
 

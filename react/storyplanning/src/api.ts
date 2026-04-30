@@ -421,6 +421,33 @@ export async function createScene(
   return response.json() as Promise<SceneDetailResponse>;
 }
 
+export type CharacterCreateResponse = {
+  id: number;
+  name: string;
+  description?: string;
+  timestamp: string;
+  idea: number;
+  scene: number | null;
+  images: ImageRow[];
+};
+
+export async function createCharacter(
+  ideaId: number,
+  payload: { name: string; description?: string; scene?: number | null },
+): Promise<CharacterCreateResponse> {
+  /* Creates a character for one idea; scene is optional and must belong to that idea */
+
+  const response = await authFetch(`/api/ideas/${ideaId}/characters/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error("Could not create character");
+  }
+  return response.json() as Promise<CharacterCreateResponse>;
+}
+
 export async function deleteIdea(id: number): Promise<void> {
   /* Deletes an idea and the backend cascades the delete to all related scenes, characters, and images*/
 

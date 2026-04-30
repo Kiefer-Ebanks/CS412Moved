@@ -278,6 +278,17 @@ function SceneDetailPage() {
             <h2>Characters in this scene</h2>
             {scene.characters.length > 0 ? (
               <ul>
+                {/* create-character row in same style but includes sceneId so new character can be linked to this scene */}
+                <li style={{ marginBottom: 12 }}>
+                  <strong>Create a new character</strong>
+                  {"  "}
+                  <Link
+                    to={`/ideas/${scene.idea}/characters/new?sceneId=${scene.id}`}
+                    state={{ from: `${location.pathname}${location.search}` }}>
+                    &rarr;
+                  </Link>
+                </li>
+
                 {scene.characters.map((character) => (
                   <li key={character.id}>
                     <Link
@@ -297,7 +308,18 @@ function SceneDetailPage() {
                 ))}
               </ul>
             ) : (
-              <p>No characters linked to this scene yet</p>
+              <>
+                <p>No characters linked to this scene yet</p>
+                <p>
+                  <strong>Create a new character</strong>
+                  {"  "}
+                  <Link
+                    to={`/ideas/${scene.idea}/characters/new?sceneId=${scene.id}`}
+                    state={{ from: `${location.pathname}${location.search}` }}>
+                    &rarr;
+                  </Link>
+                </p>
+              </>
             )}
           </section>
 
