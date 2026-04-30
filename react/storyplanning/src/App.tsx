@@ -8,6 +8,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { getToken } from "./api";
 import IdeaDetailPage from "./pages/IdeaDetailPage.tsx";
 import IdeasPage from "./pages/IdeasPage.tsx";
+import CreateIdeaPage from "./pages/CreateIdeaPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import RegisterPage from "./pages/RegisterPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
@@ -42,6 +43,16 @@ function App() {
           element={
             <RequireAuth>
               <IdeasPage />
+            </RequireAuth>
+          }
+        />
+
+        {/* Route for creating a new idea */}
+        <Route
+          path="/ideas/new"
+          element={
+            <RequireAuth>
+              <CreateIdeaPage />
             </RequireAuth>
           }
         />

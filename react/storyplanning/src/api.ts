@@ -345,6 +345,20 @@ export async function updateIdeaTitle(id: number, title: string): Promise<IdeaLi
   return response.json() as Promise<IdeaListItem>; // return the updated idea title
 }
 
+export async function createIdea(title: string, storyboard = ""): Promise<IdeaListItem> {
+  /* Creates a new idea and returns the created idea */
+
+  const response = await authFetch("/api/ideas/", { // call the ideas endpoint to create a new idea
+    method: "POST", // use the POST method to create a new idea
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, storyboard }), // send the new idea title and storyboard in the request body since those are the only fields that can be creatd
+  });
+  if (!response.ok) {
+    throw new Error("Could not create idea");
+  }
+  return response.json() as Promise<IdeaListItem>;
+}
+
 
 export async function getIdea(id: number): Promise<unknown> {
   /* Returns one idea with the attached scenes, characters, and images */

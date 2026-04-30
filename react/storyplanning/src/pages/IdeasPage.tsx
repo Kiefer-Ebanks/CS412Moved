@@ -89,9 +89,16 @@ function IdeasPage() {
 
       {ideas ? (
         <ul style={{ marginTop: 16, paddingLeft: 20 }}>
-          {ideas.results.map((idea) => (
+          {/* separate create-idea row, formatted like other idea rows but not editable on double-click */}
+          <li style={{ marginBottom: 12 }}>
+            <strong>Create a new idea</strong>
+            {"  "}
+            <Link to="/ideas/new">&rarr;</Link> {/* link to the create idea page */}
+          </li>
+
+          {ideas.results.map((idea) => ( // map over the ideas and display them in a list
             <li key={idea.id} style={{ marginBottom: 12 }}>
-              {editingIdeaId === idea.id ? (
+              {editingIdeaId === idea.id ? ( // if the idea is being edited, display the input field
                 <input
                   autoFocus
                   value={editingTitle}
