@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   clearToken,
+  deleteScene,
   getScene,
   resolveImageSrcForDisplay,
   updateSceneContent,
@@ -37,6 +38,7 @@ function SceneDetailPage() {
   const [scriptBusy, setScriptBusy] = useState(false); // state for the scene script update request status
   const [outlineMessage, setOutlineMessage] = useState(""); // short success text after outline save
   const [scriptMessage, setScriptMessage] = useState(""); // short success text after script save
+  const [deleteBusy, setDeleteBusy] = useState(false); // state for deleting this scene
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN; // get the scene id from the route
@@ -127,6 +129,27 @@ function SceneDetailPage() {
       setError(err instanceof Error ? err.message : "Could not update script");
     } finally {
       setScriptBusy(false);
+    }
+  }
+
+  async function handleDeleteScene() {
+    // deletes the scene and the backend cascades the delete to remove all related images and characters
+
+    if (!scene) return;
+
+    // confirm the deletion with the user with a confirmation dialog box
+    if (!window.confirm("Delete this scene and its related data? This cannot be undone.")) {
+      return;
+    }
+    setDeleteBusy(true);
+    try {
+      const ideaId = scene.idea; // capture before delete so we can navigate to parent idea page
+      await deleteScene(scene.id);
+      navigate(`/ideas/${ideaId}`, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete scene");
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
@@ -307,6 +330,18 @@ function SceneDetailPage() {
             ) : (
               <p>No images linked to this scene yet</p>
             )}
+          </section>
+
+          <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
+            <h2 style={{ color: "#8b0000" }}>Delete scene</h2>
+            <p>This removes the scene and related scene data. This cannot be undone.</p>
+            <button
+              type="button"
+              onClick={() => void handleDeleteScene()} // call the handleDeleteScene function to delete the scene
+              disabled={deleteBusy}
+              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              {deleteBusy ? "Deleting..." : "Delete scene"}
+            </button>
           </section>
         </>
       ) : null}

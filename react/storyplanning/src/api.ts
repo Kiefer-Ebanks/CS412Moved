@@ -408,12 +408,12 @@ export async function createScene(
   ideaId: number,
   payload: { title: string; outline?: string; script?: string },
 ): Promise<SceneDetailResponse> {
-  /* Creates a scene for one idea via POST /api/ideas/:ideaId/scenes/ */
+  /* Creates a scene for one idea using a POST request to the ideas endpoint */
 
-  const response = await authFetch(`/api/ideas/${ideaId}/scenes/`, {
-    method: "POST",
+  const response = await authFetch(`/api/ideas/${ideaId}/scenes/`, { // call the ideas endpoint to create a new scene
+    method: "POST", // use the POST method to create a new scene
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload), // send the new scene data in the request body
   });
   if (!response.ok) {
     throw new Error("Could not create scene");
@@ -431,6 +431,18 @@ export async function deleteIdea(id: number): Promise<void> {
     return;
   }
   throw new Error("Could not delete idea");
+}
+
+export async function deleteScene(id: number): Promise<void> {
+  /* Deletes a scene and the backend cascades the delete to remove all related images and characters */
+
+  const response = await authFetch(`/api/scenes/${id}/`, { // call the scenes endpoint to delete the scene
+    method: "DELETE", // use the DELETE method to delete the scene
+  });
+  if (response.ok) {
+    return;
+  }
+  throw new Error("Could not delete scene");
 }
 
 
