@@ -6,10 +6,12 @@ import { useEffect, useState } from "react";
 import {
   clearToken,
   deleteCharacter,
+  getIdea,
   getCharacter,
   resolveImageSrcForDisplay,
   updateCharacterDescription,
   updateCharacterName,
+  updateCharacterScenes,
   type CharacterDetailResponse,
 } from "../api";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -35,6 +37,10 @@ function CharacterDetailPage() {
   const [descriptionBusy, setDescriptionBusy] = useState(false); // state for description save request
   const [descriptionMessage, setDescriptionMessage] = useState(""); // short success text after description save
   const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
+  const [sceneOptions, setSceneOptions] = useState<Array<{ id: number; title: string }>>([]); // all selectable scenes under the same idea
+  const [sceneDraftIds, setSceneDraftIds] = useState<number[]>([]); // local draft of selected scene ids for this character
+  const [sceneBusy, setSceneBusy] = useState(false); // save state for scene affiliation updates
+  const [sceneMessage, setSceneMessage] = useState(""); // success text after scene affiliation save
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -48,6 +54,7 @@ function CharacterDetailPage() {
         const data = await getCharacter(pk);
         setCharacter(data);
         setDescriptionDraft(data.description ?? ""); // initialize description editor with the current description text from the backend
+        setSceneDraftIds(data.scenes ?? (data.scene != null ? [data.scene] : [])); // initialize selected scene checkboxes from backend values
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Couldn't load the character";
@@ -58,6 +65,25 @@ function CharacterDetailPage() {
     void loadCharacter();
   }, [id]);
 
+  useEffect(() => {
+    // load all scenes for this character's idea so user can change scene affiliations in one place
+    if (!character) {
+      return;
+    }
+    const ideaId = character.idea; // get the idea id for this character
+
+    async function loadIdeaScenes() {
+      try {
+        const ideaData = (await getIdea(ideaId)) as { scenes?: Array<{ id: number; title: string }> };
+        setSceneOptions(ideaData.scenes ?? []);
+      } catch {
+        setSceneOptions([]);
+      }
+    }
+
+    void loadIdeaScenes();
+  }, [character]);
+
   function handleBack() {
     // if opened from another page, go there first (for normal cross-page navigation)
     if (from) {
@@ -65,8 +91,10 @@ function CharacterDetailPage() {
       return;
     }
     // fallback path avoids returning to create form: scene first when present, otherwise idea
-    if (character?.scene != null) {
-      navigate(`/scenes/${character.scene}`);
+    const preferredSceneId =
+      character?.scenes && character.scenes.length > 0 ? character.scenes[0] : character?.scene; // get the first scene id from the list of scene ids or the single scene id if there is only one
+    if (preferredSceneId != null) {
+      navigate(`/scenes/${preferredSceneId}`);
       return;
     }
     if (character) {
@@ -152,8 +180,43 @@ function CharacterDetailPage() {
     }
   }
 
+  function toggleSceneDraft(sceneId: number) {
+    // toggles one scene id in and out of the draft selection list
+    setSceneDraftIds((prev) =>
+      prev.includes(sceneId) ? prev.filter((id) => id !== sceneId) : [...prev, sceneId],
+    );
+  }
+
+  async function handleSaveScenes() {
+    // saves the selected affiliated scenes for this character via PATCH
+    if (!character || sceneBusy) return;
+    setSceneBusy(true);
+    setSceneMessage("");
+    setError("");
+    try {
+      const updated = await updateCharacterScenes(character.id, sceneDraftIds);
+      setCharacter({
+        ...character,
+        scenes: updated.scenes ?? [],
+        scene: updated.scene,
+        timestamp: updated.timestamp,
+      });
+      setSceneDraftIds(updated.scenes ?? (updated.scene != null ? [updated.scene] : []));
+      setSceneMessage("Scene affiliations saved");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update scene affiliations");
+    } finally {
+      setSceneBusy(false);
+    }
+  }
+
   // show "Unsaved changes" when editor text differs from the saved description on the character object
   const descriptionDirty = character ? descriptionDraft !== (character.description ?? "") : false;
+  const savedSceneIds = character ? (character.scenes ?? (character.scene != null ? [character.scene] : [])) : []; // get the list of scene ids from the character object or the single scene id if there is only one
+  const sceneDirty =
+    character && // check if the character object is not null
+    (savedSceneIds.length !== sceneDraftIds.length || // check if the list of saved scene ids is not the same length as the list of scene draft ids
+      savedSceneIds.some((id) => !sceneDraftIds.includes(id))); // check if any of the saved scene ids are not in the list of scene draft ids
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
@@ -230,6 +293,38 @@ function CharacterDetailPage() {
                 {descriptionBusy ? "Saving..." : "Save changes"}
               </button>
               {descriptionMessage ? <span style={{ color: "green" }}>{descriptionMessage}</span> : null}
+            </div>
+          </section>
+
+          <section style={{ marginTop: 24 }}>
+            <h2>Affiliated scenes</h2>
+            <p style={{ marginTop: 0, color: "#555" }}>
+              Select all scenes this character belongs to, then save.
+            </p>
+            {sceneOptions.length > 0 ? (
+              <div style={{ border: "1px solid #ddd", borderRadius: 6, padding: 12 }}>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {sceneOptions.map((scene) => (
+                    <label key={scene.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="checkbox"
+                        checked={sceneDraftIds.includes(scene.id)}
+                        onChange={() => toggleSceneDraft(scene.id)}
+                      />
+                      <span>{scene.title}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p>No scenes available for this idea yet.</p>
+            )}
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+              {sceneDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              <button type="button" onClick={() => void handleSaveScenes()} disabled={sceneBusy}>
+                {sceneBusy ? "Saving..." : "Save changes"}
+              </button>
+              {sceneMessage ? <span style={{ color: "green" }}>{sceneMessage}</span> : null}
             </div>
           </section>
 

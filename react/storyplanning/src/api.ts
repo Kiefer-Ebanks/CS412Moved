@@ -269,6 +269,7 @@ export type SceneCharacterRow = {
   timestamp: string;
   idea: number;
   scene: number | null;
+  scenes?: number[];
 };
 
 // image model shape from ImageSerializer
@@ -307,6 +308,7 @@ export type CharacterDetailResponse = {
   timestamp: string;
   idea: number;
   scene: number | null;
+  scenes?: number[];
   images: ImageRow[];
 };
 
@@ -429,14 +431,15 @@ export type CharacterCreateResponse = {
   timestamp: string;
   idea: number;
   scene: number | null;
+  scenes?: number[];
   images: ImageRow[];
 };
 
 export async function createCharacter(
   ideaId: number,
-  payload: { name: string; description?: string; scene?: number | null },
+  payload: { name: string; description?: string; scenes?: number[]; scene?: number | null },
 ): Promise<CharacterCreateResponse> {
-  /* Creates a character for one idea. The scene is optional and has to belong to that idea */
+  /* Creates a character for one idea and potentially links it to one or more scenes */
 
   const response = await authFetch(`/api/ideas/${ideaId}/characters/`, { // call the ideas endpoint to create a new character
     method: "POST", // use the POST method to create a new character
@@ -561,16 +564,33 @@ export async function updateCharacterDescription(
   return response.json() as Promise<CharacterCreateResponse>;
 }
 
+export async function updateCharacterScenes(
+  id: number,
+  scenes: number[],
+): Promise<CharacterCreateResponse> {
+  /* Updates the full set of scene affiliations for one character */
+
+  const response = await authFetch(`/api/characters/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenes }),
+  });
+  if (!response.ok) {
+    throw new Error("Could not update character scenes");
+  }
+  return response.json() as Promise<CharacterCreateResponse>;
+}
+
 export async function updateImageDescription(
   id: number,
   description: string,
 ): Promise<ImageDetailResponse> {
-  /* Updates only image description via PATCH /api/images/:id/ */
+  /* Updates only image description via a PATCH request to the images endpoint */
 
-  const response = await authFetch(`/api/images/${id}/`, {
-    method: "PATCH",
+  const response = await authFetch(`/api/images/${id}/`, { // call the images endpoint to update the image description
+    method: "PATCH", // use the PATCH method to update the image description
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ description }),
+    body: JSON.stringify({ description }), // send the new description in the request body
   });
   if (!response.ok) {
     throw new Error("Could not update image description");
@@ -581,7 +601,7 @@ export async function updateImageDescription(
 export async function deleteImage(id: number): Promise<void> {
   /* Deletes one image row by id */
 
-  const response = await authFetch(`/api/images/${id}/`, {
+  const response = await authFetch(`/api/images/${id}/`, { // call the images endpoint to delete the image
     method: "DELETE",
   });
   if (response.ok) {
