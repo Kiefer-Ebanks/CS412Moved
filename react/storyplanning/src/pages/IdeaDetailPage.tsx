@@ -5,9 +5,14 @@
 
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { clearToken, getIdea, resolveImageSrcForDisplay } from "../api";
+import {
+  clearToken,
+  getIdea,
+  resolveImageSrcForDisplay,
+  type ImageRow,
+} from "../api";
 
-// scene row object from IdeaSerializer
+// scene model shape from IdeaSerializer
 type SceneRow = {
   id: number;
   title: string;
@@ -22,14 +27,7 @@ type CharacterRow = {
   description?: string;
 };
 
-// image row object from IdeaSerializer
-type ImageRow = {
-  id: number;
-  image?: string;
-  description?: string;
-};
-
-// Shape of the idea detail response from GET /api/ideas/:id/ 
+// shape of the idea detail response from the ideas endpoint
 type IdeaDetail = {
   id: number;
   title: string;

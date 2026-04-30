@@ -174,8 +174,8 @@ export type SceneCharacterRow = {
   scene: number | null;
 };
 
-// image model from SceneSerializer and idea_title, scene_title, character_name from ImageSerializer
-export type SceneImageRow = {
+// image model shape from ImageSerializer
+export type ImageRow = {
   id: number;
   image?: string;
   image_url?: string;
@@ -199,7 +199,7 @@ export type SceneDetailResponse = {
   timestamp: string;
   idea: number;
   characters: SceneCharacterRow[];
-  images: SceneImageRow[];
+  images: ImageRow[];
 };
 
 // shape of the character model that we get from the backend charactersendpoint with images linked to the character
@@ -210,7 +210,7 @@ export type CharacterDetailResponse = {
   timestamp: string;
   idea: number;
   scene: number | null;
-  images: SceneImageRow[];
+  images: ImageRow[];
 };
 
 // Paginated response for the ideas list from /api/ideas/ 
@@ -275,7 +275,7 @@ export async function getCharacter(id: number): Promise<CharacterDetailResponse>
 }
 
 // shape of the image detail response from the backend images endpoint
-export type ImageDetailResponse = SceneImageRow;
+export type ImageDetailResponse = ImageRow;
 
 export async function getImage(id: number): Promise<ImageDetailResponse> {
   /* Returns one image row for the image detail page */
