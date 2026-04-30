@@ -4,7 +4,7 @@
 // When the user submits the form it redirects them to that idea's detail page, and the cancel button returns them to the all ideas page
 
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createIdea } from "../api";
 
 function CreateIdeaPage() {
@@ -35,13 +35,18 @@ function CreateIdeaPage() {
   }
 
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to="/ideas">&larr; Cancel and return to ideas</Link>
-      </p>
-
+    <main
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        padding: "0 1rem",
+        minHeight: "70vh",
+        display: "flex",
+        alignItems: "center",
+      }}>
+      <div style={{ width: "100%" }}>
       <h1>Create idea</h1>
-      <p>Enter your idea's title and a short storyboard</p>
+      <p style={{ marginBottom: 18 }}>Enter your idea's title and a short storyboard</p>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="idea-title">Title (required)</label>
@@ -74,6 +79,7 @@ function CreateIdeaPage() {
           </button>
         </div>
       </form>
+      </div>
     </main>
   );
 }

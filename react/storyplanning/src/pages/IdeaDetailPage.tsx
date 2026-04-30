@@ -6,7 +6,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
-  clearToken,
   deleteIdea,
   getIdea,
   resolveImageSrcForDisplay,
@@ -46,17 +45,12 @@ type IdeaDetail = {
   drawings?: DrawingRow[];
 };
 
-type FromState = {
-  from?: string;
-};
-
 function IdeaDetailPage() {
   // Get the idea id from the URL and navigate to the idea detail page
 
   const { id } = useParams(); // get the idea id from the URL
   const navigate = useNavigate(); // navigate to the idea detail page
   const location = useLocation(); // get the current page location
-  const backTo = (location.state as FromState | null)?.from; // e.g. return to image detail when opened from there
 
   // State for the idea detail
   const [idea, setIdea] = useState<IdeaDetail | null>(null); // the idea detail object
@@ -98,9 +92,18 @@ function IdeaDetailPage() {
     load();
   }, [id]);
 
-  function handleLogout() {
-    clearToken();
-    navigate("/login"); // navigate to the login page
+  function formatTimestamp(value: string): string {
+    // format API timestamp as Month Day, Year and hour:minute AM/PM for easier reading
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   function startIdeaTitleEdit() {
@@ -256,20 +259,6 @@ function IdeaDetailPage() {
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        {backTo ? (
-          <>
-            <Link to={backTo}>&larr; Back</Link>
-            {" · "}
-          </>
-        ) : null}
-        <Link to="/ideas">&larr; Back to ideas</Link>
-      </p>
-
-      <button type="button" onClick={handleLogout}>
-        Logout
-      </button>
-
       {error ? (
         <p style={{ color: "crimson", marginTop: 16 }}>{error}</p>
       ) : null}
@@ -302,12 +291,12 @@ function IdeaDetailPage() {
             </h1>
           )}
           <p>
-            <strong>Last updated:</strong> {idea.timestamp}
+            <strong>Last updated:</strong> {formatTimestamp(idea.timestamp)}
           </p>
           <section style={{ marginTop: 24 }}>
             <h2>Storyboard</h2>
             <p style={{ marginTop: 0, color: "#555" }}>
-              Click in and edit freely. Changes save only when you click Save changes.
+              Click in and edit the text. Changes save only when you click Save changes.
             </p>
             {/* fixed-height "document window" so long text scrolls inside this panel */}
             <div style={{ height: 340, border: "1px solid #ddd", borderRadius: 6, overflow: "auto" }}>

@@ -4,7 +4,7 @@
 // It contains the routes for the application and checks if the user is authenticated
 // If the user is not authenticated it will take them to the login page
 
-import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { clearToken, getStoredUsername, getToken } from "./api";
 import IdeaDetailPage from "./pages/IdeaDetailPage.tsx";
 import IdeasPage from "./pages/IdeasPage.tsx";
@@ -33,7 +33,11 @@ function AuthenticatedLayout() {
   // layout component that is used to display the shared top bar with title and account information forall the pages in my app
 
   const navigate = useNavigate();
+  const location = useLocation();
   const username = getStoredUsername();
+  const stateFrom = (location.state as { from?: string } | null)?.from;
+  const showIdeaDetailBack = /^\/ideas\/\d+$/.test(location.pathname);
+  const backTarget = stateFrom ?? "/ideas";
 
   function handleLogout() {
     // clear auth token and route back to login when user logs out from navbar
@@ -49,6 +53,11 @@ function AuthenticatedLayout() {
           <h2 className="app-shell-title">FilmBoard</h2>
         </Link>
         <div className="app-shell-right">
+          {showIdeaDetailBack ? (
+            <Link to={backTarget} className="app-shell-back-link">
+              &larr; Back
+            </Link>
+          ) : null}
           <Link to="/account" className="app-shell-account-link"> {/* Link to the account page */}
             {username ?? "Account"}
           </Link>
