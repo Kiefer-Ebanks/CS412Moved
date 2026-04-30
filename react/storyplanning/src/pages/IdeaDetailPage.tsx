@@ -102,7 +102,7 @@ function IdeaDetailPage() {
           <section style={{ marginTop: 24 }}>
             <h2>Storyboard</h2>
             <p style={{ whiteSpace: "pre-wrap" }}>
-              {idea.storyboard || "(empty)"}
+              {idea.storyboard || "No storyboard"}
             </p>
           </section>
 
@@ -112,7 +112,10 @@ function IdeaDetailPage() {
               <ul>
                 {idea.scenes.map((s) => (
                   <li key={s.id}>
-                    <strong>{s.title}</strong>
+                    {/* clicking the scene title takes the user to the scene detail page */}
+                    <Link to={`/scenes/${s.id}`}>
+                      <strong>{s.title}</strong>
+                    </Link>
                     {s.outline ? (
                       <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
                         {s.outline}
@@ -162,7 +165,7 @@ function IdeaDetailPage() {
                         />
                       </>
                     ) : null}
-                    <p>{img.description || "(no description)"}</p>
+                    <p>{img.description || "No description"}</p>
                   </li>
                 ))}
               </ul>

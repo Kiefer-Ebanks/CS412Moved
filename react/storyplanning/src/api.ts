@@ -164,7 +164,42 @@ export type IdeaListItem = {
   user: number;
 };
 
-// Paginated response for the ideas list from GET /api/ideas/ 
+// character object from SceneSerializer
+export type SceneCharacterRow = {
+  id: number;
+  name: string;
+  description?: string;
+  timestamp: string;
+  idea: number;
+  scene: number | null;
+};
+
+// image object from SceneSerializer
+export type SceneImageRow = {
+  id: number;
+  image?: string;
+  image_url?: string;
+  image_file?: string | null;
+  description?: string;
+  timestamp: string;
+  scene?: number | null;
+  character?: number | null;
+  idea: number;
+};
+
+// shape of the scene detail response from /api/scenes/:id/
+export type SceneDetailResponse = {
+  id: number;
+  title: string;
+  outline: string;
+  script: string;
+  timestamp: string;
+  idea: number;
+  characters: SceneCharacterRow[];
+  images: SceneImageRow[];
+};
+
+// Paginated response for the ideas list from /api/ideas/ 
 export type IdeasListResponse = {
   count: number;
   next: string | null;
@@ -197,4 +232,17 @@ export async function getIdea(id: number): Promise<unknown> {
     throw new Error("Couldn't get the idea from the API");
   }
   return response.json();
+}
+
+export async function getScene(id: number): Promise<SceneDetailResponse> {
+  /* Returns one scene with attached characters and images */
+
+  const response = await authFetch(`/api/scenes/${id}/`); // hit the scenes endpoint to get the scene
+  if (response.status === 404) {
+    throw new Error("Scene not found");
+  }
+  if (!response.ok) {
+    throw new Error("Couldn't get the scene from the API");
+  }
+  return response.json() as Promise<SceneDetailResponse>;
 }
