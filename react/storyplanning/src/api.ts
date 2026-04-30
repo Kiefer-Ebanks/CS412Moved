@@ -345,6 +345,20 @@ export async function updateIdeaTitle(id: number, title: string): Promise<IdeaLi
   return response.json() as Promise<IdeaListItem>; // return the updated idea title
 }
 
+export async function updateSceneTitle(id: number, title: string): Promise<SceneDetailResponse> {
+  /* Updates only a scene title via a PATCH request to the scenes endpoint */
+
+  const response = await authFetch(`/api/scenes/${id}/`, { // call the scenes endpoint to update the scene title
+    method: "PATCH", // use the PATCH method to update the scene title
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }), // send the new title in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not update scene title");
+  }
+  return response.json() as Promise<SceneDetailResponse>; // return the updated scene title
+}
+
 export async function createIdea(title: string, storyboard = ""): Promise<IdeaListItem> {
   /* Creates a new idea and returns the created idea */
 
@@ -362,10 +376,10 @@ export async function createIdea(title: string, storyboard = ""): Promise<IdeaLi
 export async function deleteIdea(id: number): Promise<void> {
   /* Deletes an idea and the backend cascades the delete to all related scenes, characters, and images*/
 
-  const response = await authFetch(`/api/ideas/${id}/`, {
-    method: "DELETE",
+  const response = await authFetch(`/api/ideas/${id}/`, { // call the ideas endpoint to delete the idea
+    method: "DELETE", // use the DELETE method to delete the idea
   });
-  if (response.ok) {
+  if (response.ok) { // if the idea was deleted successfully return nothing
     return;
   }
   throw new Error("Could not delete idea");
