@@ -8,6 +8,8 @@ import {
   deleteCharacter,
   getCharacter,
   resolveImageSrcForDisplay,
+  updateCharacterDescription,
+  updateCharacterName,
   type CharacterDetailResponse,
 } from "../api";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -26,6 +28,12 @@ function CharacterDetailPage() {
   const [character, setCharacter] = useState<CharacterDetailResponse | null>(null);
   const [error, setError] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false); // state for the busy state of the delete character request
+  const [editingTitle, setEditingTitle] = useState(false); // state for the inline edit mode for character name
+  const [titleDraft, setTitleDraft] = useState(""); // draft text for character title input
+  const [titleBusy, setTitleBusy] = useState(false); // state for character name save request
+  const [descriptionDraft, setDescriptionDraft] = useState(""); // always-editable character description draft
+  const [descriptionBusy, setDescriptionBusy] = useState(false); // state for description save request
+  const [descriptionMessage, setDescriptionMessage] = useState(""); // short success text after description save
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -38,6 +46,7 @@ function CharacterDetailPage() {
       try {
         const data = await getCharacter(pk);
         setCharacter(data);
+        setDescriptionDraft(data.description ?? ""); // initialize description editor with the current description text from the backend
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Couldn't load the character";
@@ -61,6 +70,57 @@ function CharacterDetailPage() {
     navigate("/login");
   }
 
+  function startTitleEdit() {
+    // enter edit mode when user double-clicks a character name
+    if (!character) return;
+    setEditingTitle(true);
+    setTitleDraft(character.name);
+    setError("");
+  }
+
+  async function saveTitle() {
+    // saves the name from the inline edit to the server and update the local name text
+
+    if (!character) return;
+
+    const trimmed = titleDraft.trim();
+    if (!trimmed) {
+      setError("Character name cannot be blank.");
+      return;
+    }
+    if (trimmed === character.name.trim()) {
+      setEditingTitle(false);
+      return;
+    }
+    setTitleBusy(true);
+    try {
+      const updated = await updateCharacterName(character.id, trimmed);
+      setCharacter({ ...character, name: updated.name, timestamp: updated.timestamp });
+      setEditingTitle(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update character name");
+    } finally {
+      setTitleBusy(false);
+    }
+  }
+
+  async function handleSaveDescription() {
+    // saves the description from the inline edit to the server and update the local description text
+    if (!character) return;
+    setDescriptionMessage(""); // clear any previous success messages
+    setDescriptionBusy(true); // set the description busy state to true
+    try {
+      const updated = await updateCharacterDescription(character.id, descriptionDraft); // call the update character description function to update the description in the backend
+
+      setCharacter({ ...character, description: updated.description, timestamp: updated.timestamp }); // update the local description text and timestamp with the new description text and timestamp from the backend
+      setDescriptionMessage("Description saved"); // set the success message to "Description saved"
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update character description");
+    } finally {
+      setDescriptionBusy(false);
+    }
+  }
+
   async function handleDeleteCharacter() {
     // deletes the character and the backend cascades the delete to remove all related images
     if (!character) return;
@@ -80,6 +140,9 @@ function CharacterDetailPage() {
       setDeleteBusy(false);
     }
   }
+
+  // show "Unsaved changes" when editor text differs from the saved description on the character object
+  const descriptionDirty = character ? descriptionDraft !== (character.description ?? "") : false;
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
@@ -101,15 +164,62 @@ function CharacterDetailPage() {
 
       {character ? (
         <>
-          <h1>{character.name}</h1>
+          {editingTitle ? (
+            <input
+              autoFocus
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              disabled={titleBusy}
+              onBlur={() => void saveTitle()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void saveTitle();
+                } else if (e.key === "Escape") {
+                  setEditingTitle(false);
+                  setTitleDraft(character.name);
+                }
+              }}
+              style={{ fontSize: "1.8rem", fontWeight: 700, width: "100%", margin: "0 0 10px" }}
+            />
+          ) : (
+            <h1 title="Double-click to rename" onDoubleClick={startTitleEdit} style={{ cursor: "text" }}>
+              {character.name}
+            </h1>
+          )}
           <p>
             <strong>Last updated:</strong> {character.timestamp}
           </p>
           <section style={{ marginTop: 24 }}>
             <h2>Description</h2>
-            <p style={{ whiteSpace: "pre-wrap" }}>
-              {character.description || "No description"}
+            <p style={{ marginTop: 0, color: "#555" }}>
+              Edit freely. Changes save only when you press Save changes.
             </p>
+            <div style={{ height: 340, border: "1px solid #ddd", borderRadius: 6, overflow: "auto" }}>
+              <textarea
+                value={descriptionDraft}
+                onChange={(e) => setDescriptionDraft(e.target.value)}
+                placeholder="Write character description..."
+                style={{
+                  width: "100%",
+                  minHeight: "100%",
+                  border: "none",
+                  outline: "none",
+                  resize: "none",
+                  padding: 12,
+                  font: "inherit",
+                  lineHeight: 1.45,
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+              {descriptionDirty ? <span style={{ color: "#990000" }}>Unsaved changes</span> : null}
+              <button type="button" onClick={() => void handleSaveDescription()} disabled={descriptionBusy}>
+                {descriptionBusy ? "Saving..." : "Save changes"}
+              </button>
+              {descriptionMessage ? <span style={{ color: "green" }}>{descriptionMessage}</span> : null}
+            </div>
           </section>
 
           {/* Images linked to this character in the DB (Image.character FK); same resolve helper as scene/idea pages */}

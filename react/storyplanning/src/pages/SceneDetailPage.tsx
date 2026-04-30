@@ -9,6 +9,7 @@ import {
   deleteScene,
   getScene,
   resolveImageSrcForDisplay,
+  updateCharacterName,
   updateSceneContent,
   updateSceneTitle,
   type SceneDetailResponse,
@@ -17,6 +18,8 @@ import {
 type FromState = {
   from?: string;
 };
+
+type SceneCharacterRow = SceneDetailResponse["characters"][number]; // shape of a character row from the scene detail response
 
 function SceneDetailPage() {
 
@@ -39,6 +42,9 @@ function SceneDetailPage() {
   const [outlineMessage, setOutlineMessage] = useState(""); // short success text after outline save
   const [scriptMessage, setScriptMessage] = useState(""); // short success text after script save
   const [deleteBusy, setDeleteBusy] = useState(false); // state for deleting this scene
+  const [editingCharacterId, setEditingCharacterId] = useState<number | null>(null); // state of the character row currently being renamed
+  const [characterNameDraft, setCharacterNameDraft] = useState(""); // draft text for inline character rename
+  const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN; // get the scene id from the route
@@ -150,6 +156,44 @@ function SceneDetailPage() {
       setError(err instanceof Error ? err.message : "Could not delete scene");
     } finally {
       setDeleteBusy(false);
+    }
+  }
+
+  function startCharacterNameEdit(character: SceneCharacterRow) {
+    // enter edit mode when user double-clicks a character name
+    setEditingCharacterId(character.id);
+    setCharacterNameDraft(character.name);
+    setError("");
+  }
+
+  async function saveCharacterName(character: SceneCharacterRow) {
+    // saves the character name from the inline edit to the server and update the local list of characters
+    if (!scene) return;
+    const trimmed = characterNameDraft.trim();
+    if (!trimmed) {
+      setError("Character name cannot be blank.");
+      return;
+    }
+    if (trimmed === character.name.trim()) {
+      setEditingCharacterId(null);
+      setCharacterNameDraft("");
+      return;
+    }
+    setCharacterNameBusyId(character.id);
+    try {
+      const updated = await updateCharacterName(character.id, trimmed);
+      setScene({
+        ...scene,
+        characters: scene.characters.map((row) =>
+          row.id === character.id ? { ...row, name: updated.name } : row,
+        ),
+      });
+      setEditingCharacterId(null);
+      setCharacterNameDraft("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update character name");
+    } finally {
+      setCharacterNameBusyId(null);
     }
   }
 
@@ -291,14 +335,40 @@ function SceneDetailPage() {
 
                 {scene.characters.map((character) => (
                   <li key={character.id}>
-                    <Link
-                      // clicking the character name takes the user to the character detail page
-                      to={`/characters/${character.id}`}
-                      // save the current page location in the state so the user can be redirected back to it after going to the character detail page
-                      state={{ from: `${location.pathname}${location.search}` }}
-                    >
-                      <strong>{character.name}</strong>
-                    </Link>
+                    {editingCharacterId === character.id ? (
+                      <input
+                        autoFocus
+                        value={characterNameDraft}
+                        onChange={(e) => setCharacterNameDraft(e.target.value)}
+                        disabled={characterNameBusyId === character.id}
+                        onBlur={() => void saveCharacterName(character)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void saveCharacterName(character);
+                          } else if (e.key === "Escape") {
+                            setEditingCharacterId(null);
+                            setCharacterNameDraft("");
+                          }
+                        }}
+                        style={{ width: "100%", maxWidth: 420, marginBottom: 4 }}
+                      />
+                    ) : (
+                      <>
+                        <strong
+                          title="Double-click to rename"
+                          onDoubleClick={() => startCharacterNameEdit(character)}
+                          style={{ cursor: "text" }}>
+                          {character.name}
+                        </strong>
+                        {"  "}
+                        <Link
+                          to={`/characters/${character.id}`}
+                          state={{ from: `${location.pathname}${location.search}` }}>
+                          &rarr;
+                        </Link>
+                      </>
+                    )}
                     {character.description ? (
                       <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
                         {character.description}

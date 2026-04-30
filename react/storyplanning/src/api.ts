@@ -485,6 +485,37 @@ export async function deleteCharacter(id: number): Promise<void> {
   throw new Error("Could not delete character");
 }
 
+export async function updateCharacterName(id: number, name: string): Promise<CharacterCreateResponse> {
+  /* Updates only a character name via PATCH /api/characters/:id/ */
+
+  const response = await authFetch(`/api/characters/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) {
+    throw new Error("Could not update character name");
+  }
+  return response.json() as Promise<CharacterCreateResponse>;
+}
+
+export async function updateCharacterDescription(
+  id: number,
+  description: string,
+): Promise<CharacterCreateResponse> {
+  /* Updates only character description via PATCH /api/characters/:id/ */
+
+  const response = await authFetch(`/api/characters/${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ description }),
+  });
+  if (!response.ok) {
+    throw new Error("Could not update character description");
+  }
+  return response.json() as Promise<CharacterCreateResponse>;
+}
+
 
 export async function getIdea(id: number): Promise<unknown> {
   /* Returns one idea with the attached scenes, characters, and images */
