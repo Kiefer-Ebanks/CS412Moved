@@ -359,6 +359,18 @@ export async function createIdea(title: string, storyboard = ""): Promise<IdeaLi
   return response.json() as Promise<IdeaListItem>;
 }
 
+export async function deleteIdea(id: number): Promise<void> {
+  /* Deletes an idea and the backend cascades the delete to all related scenes, characters, and images*/
+
+  const response = await authFetch(`/api/ideas/${id}/`, {
+    method: "DELETE",
+  });
+  if (response.ok) {
+    return;
+  }
+  throw new Error("Could not delete idea");
+}
+
 
 export async function getIdea(id: number): Promise<unknown> {
   /* Returns one idea with the attached scenes, characters, and images */

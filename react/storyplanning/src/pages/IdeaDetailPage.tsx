@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   clearToken,
+  deleteIdea,
   getIdea,
   resolveImageSrcForDisplay,
   type ImageRow,
@@ -54,6 +55,7 @@ function IdeaDetailPage() {
   // State for the idea detail
   const [idea, setIdea] = useState<IdeaDetail | null>(null); // the idea detail object
   const [error, setError] = useState(""); // the error message
+  const [deleteBusy, setDeleteBusy] = useState(false); // state for idea deletion request status
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN;
@@ -79,6 +81,24 @@ function IdeaDetailPage() {
   function handleLogout() {
     clearToken();
     navigate("/login"); // navigate to the login page
+  }
+
+  async function handleDeleteIdea() {
+    if (!idea) return;
+
+    // dialog box pop up to confirm the user wants to delete the idea
+    if (!window.confirm("Delete this idea and all related scenes, characters, and images?")) {
+      return;
+    }
+    setDeleteBusy(true);
+    try {
+      await deleteIdea(idea.id);
+      navigate("/ideas", { replace: true }); // navigate to the all ideas page after the idea is deleted
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete idea");
+    } finally {
+      setDeleteBusy(false);
+    }
   }
 
   return (
@@ -191,6 +211,20 @@ function IdeaDetailPage() {
             ) : (
               <p>No images yet</p>
             )}
+          </section>
+
+          <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
+            <h2 style={{ color: "#8b0000" }}>Delete idea</h2>
+            <p>
+              This removes the idea and all related scenes, characters, and images. This cannot be undone.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleDeleteIdea()}
+              disabled={deleteBusy}
+              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              {deleteBusy ? "Deleting..." : "Delete idea"}
+            </button>
           </section>
         </>
       ) : null}
