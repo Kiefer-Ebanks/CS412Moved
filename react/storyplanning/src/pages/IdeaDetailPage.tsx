@@ -197,7 +197,7 @@ function IdeaDetailPage() {
       
       // keep local idea object in sync so other sections show current text if needed
       setIdea({ ...idea, storyboard: updated.storyboard, timestamp: updated.timestamp }); // updating the storyboard and timestamp so "Last updated" refreshes immediately
-      setStoryboardMessage("Storyboard saved."); // set the success message to "Storyboard saved."
+      setStoryboardMessage("Storyboard saved"); // set the success message to "Storyboard saved."
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update storyboard");
     } finally {

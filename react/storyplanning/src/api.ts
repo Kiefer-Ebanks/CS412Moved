@@ -359,6 +359,23 @@ export async function updateSceneTitle(id: number, title: string): Promise<Scene
   return response.json() as Promise<SceneDetailResponse>; // return the updated scene title
 }
 
+export async function updateSceneContent(
+  id: number,
+  payload: { outline?: string; script?: string },
+): Promise<SceneDetailResponse> {
+  /* Updates scene outline/script fields via a PATCH request to the scenes endpoint */
+
+  const response = await authFetch(`/api/scenes/${id}/`, { // call the scenes endpoint to update the scene content
+    method: "PATCH", // use the PATCH method to update the scene content
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload), // send the new content in the request body
+  });
+  if (!response.ok) {
+    throw new Error("Could not update scene content");
+  }
+  return response.json() as Promise<SceneDetailResponse>;
+}
+
 export async function updateIdeaStoryboard(id: number, storyboard: string): Promise<IdeaListItem> {
   /* Updates only storyboard text using a PATCH request to the ideas endpoint */
 
