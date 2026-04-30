@@ -2,7 +2,7 @@
 // Description: Form page to create an image from an external URL and optional description, then redirect to image detail.
 
 import { type FormEvent, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createImageLink } from "../api";
 
 type FromState = { from?: string };
@@ -66,13 +66,18 @@ function CreateImageLinkPage() {
   }
 
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to={cancelTarget}>&larr; Cancel and return</Link>
-      </p>
-
+    <main
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        padding: "0 1rem",
+        minHeight: "90vh",
+        display: "flex",
+        alignItems: "center",
+      }}>
+      <div style={{ width: "100%" }}>
       <h1>Add a link</h1>
-      <p>Paste an image URL and optional description.</p>
+      <p style={{ marginBottom: 18 }}>Paste an image URL and optional description.</p>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="image-url">Image URL</label>
@@ -105,6 +110,7 @@ function CreateImageLinkPage() {
           </button>
         </div>
       </form>
+      </div>
     </main>
   );
 }

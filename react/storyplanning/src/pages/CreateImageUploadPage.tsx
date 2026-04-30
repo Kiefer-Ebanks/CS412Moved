@@ -2,7 +2,7 @@
 // Description: Form page to upload an image file and optional description, then redirect to that image detail page.
 
 import { type FormEvent, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createImageUpload } from "../api";
 
 type FromState = { from?: string };
@@ -65,13 +65,18 @@ function CreateImageUploadPage() {
   }
 
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to={cancelTarget}>&larr; Cancel and return</Link>
-      </p>
-
+    <main
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        padding: "0 1rem",
+        minHeight: "90vh",
+        display: "flex",
+        alignItems: "center",
+      }}>
+      <div style={{ width: "100%" }}>
       <h1>Upload a photo</h1>
-      <p>Select an image file and optional description.</p>
+      <p style={{ marginBottom: 18 }}>Select an image file and optional description.</p>
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="image-file">Photo</label>
@@ -104,6 +109,7 @@ function CreateImageUploadPage() {
           </button>
         </div>
       </form>
+      </div>
     </main>
   );
 }

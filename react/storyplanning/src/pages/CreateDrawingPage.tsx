@@ -3,7 +3,7 @@
 // Description: A form page to create a drawing for one idea and potentially link it to a scene and character
 
 import { useCallback, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { createDrawing } from "../api";
@@ -114,39 +114,46 @@ function CreateDrawingPage() {
   }, []);
 
   return (
-    <main style={{ maxWidth: 1100, margin: "1rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to={cancelTarget}>&larr; Cancel and Go Back</Link>
-      </p>
-      <h1>Create drawing</h1>
-      <p>Draw freely, add an optional title, then click Create to save it.</p>
+    <main
+      style={{
+        maxWidth: 1100,
+        margin: "0 auto",
+        padding: "0 1rem",
+        minHeight: "90vh",
+        display: "flex",
+        alignItems: "center",
+      }}>
+      <div style={{ width: "100%" }}>
+        <h1>Create drawing</h1>
+        <p style={{ marginBottom: 18 }}>Draw freely, add an optional title, then click Create to save it.</p>
 
-      <label htmlFor="drawing-title">Title (optional)</label>
-      <input
-        id="drawing-title"
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="e.g. Scene moodboard"
-        style={{ display: "block", width: "100%", marginBottom: 12 }}
-      />
-
-      {/* Excalidraw canvas for creating a brand new drawing */}
-      <div style={{ height: "70vh", border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
-        <Excalidraw
-          onChange={handleSceneChange} // handle the scene changes from Excalidraw
+        <label htmlFor="drawing-title">Title (optional)</label>
+        <input
+          id="drawing-title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Scene moodboard"
+          style={{ display: "block", width: "100%", marginBottom: 12 }}
         />
-      </div>
 
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
+        {/* Excalidraw canvas for creating a brand new drawing */}
+        <div style={{ height: "70vh", border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
+          <Excalidraw
+            onChange={handleSceneChange} // handle the scene changes from Excalidraw
+          />
+        </div>
 
-      <div style={{ marginTop: 12, display: "flex", gap: 10, justifyContent: "flex-end" }}>
-        <button type="button" onClick={() => void handleCreateDrawing()} disabled={busy}>
-          {busy ? "Creating..." : "Create"}
-        </button>
-        <button type="button" onClick={() => navigate(cancelTarget)} disabled={busy}>
-          Cancel
-        </button>
+        {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
+
+        <div style={{ marginTop: 12, display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button type="button" onClick={() => void handleCreateDrawing()} disabled={busy}>
+            {busy ? "Creating..." : "Create"}
+          </button>
+          <button type="button" onClick={() => navigate(cancelTarget)} disabled={busy}>
+            Cancel
+          </button>
+        </div>
       </div>
     </main>
   );
