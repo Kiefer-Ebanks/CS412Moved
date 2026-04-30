@@ -2,10 +2,9 @@
 // Author: Kiefer Ebanks (kebanks@bu.edu), 4/29/2026
 // Description: This page displays the details of a single scene, including title, outline, script, characters, and images
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
-  clearToken,
   deleteScene,
   getScene,
   resolveImageSrcForDisplay,
@@ -15,10 +14,6 @@ import {
   type SceneDetailResponse,
 } from "../api";
 
-type FromState = {
-  from?: string;
-};
-
 type SceneCharacterRow = SceneDetailResponse["characters"][number]; // shape of a character row from the scene detail response
 
 function SceneDetailPage() {
@@ -27,7 +22,6 @@ function SceneDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation(); // get the current page location
-  const backTo = (location.state as FromState | null)?.from; // e.g. return to image detail when opened from there
 
   // State for the scene detail response and error text
   const [scene, setScene] = useState<SceneDetailResponse | null>(null);
@@ -46,6 +40,7 @@ function SceneDetailPage() {
   const [characterNameDraft, setCharacterNameDraft] = useState(""); // draft text for inline character rename
   const [characterNameBusyId, setCharacterNameBusyId] = useState<number | null>(null); // busy state for one character rename save
   const [showAddImageMenu, setShowAddImageMenu] = useState(false); // toggles the Add an image dropdown menu
+  const characterClickTimerRef = useRef<number | null>(null); // single-click timer so double-click on name can still enter edit mode
 
   useEffect(() => {
     const pk = id ? Number.parseInt(id, 10) : NaN; // get the scene id from the route
@@ -70,9 +65,18 @@ function SceneDetailPage() {
     loadScene();
   }, [id]);
 
-  function handleLogout() {
-    clearToken();
-    navigate("/login"); // navigate to the login page
+  function formatTimestamp(value: string): string {
+    // format API timestamp as Month Day, Year and hour:minute AM/PM for easier reading
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
 
   function startTitleEdit() {
@@ -162,9 +166,27 @@ function SceneDetailPage() {
 
   function startCharacterNameEdit(character: SceneCharacterRow) {
     // enter edit mode when user double-clicks a character name
+    if (characterClickTimerRef.current != null) {
+      window.clearTimeout(characterClickTimerRef.current);
+      characterClickTimerRef.current = null;
+    }
     setEditingCharacterId(character.id);
     setCharacterNameDraft(character.name);
     setError("");
+  }
+
+  function handleCharacterCardClick(characterId: number) {
+    // single-click anywhere on card opens detail; slight delay lets name double-click enter edit mode
+    if (editingCharacterId != null) return;
+    if (characterClickTimerRef.current != null) {
+      window.clearTimeout(characterClickTimerRef.current);
+    }
+    characterClickTimerRef.current = window.setTimeout(() => {
+      navigate(`/characters/${characterId}`, {
+        state: { from: `${location.pathname}${location.search}` },
+      });
+      characterClickTimerRef.current = null;
+    }, 220);
   }
 
   async function saveCharacterName(character: SceneCharacterRow) {
@@ -204,22 +226,6 @@ function SceneDetailPage() {
 
   return (
     <main style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        {backTo ? (
-          <>
-            {/* opened from another screen (e.g. image detail); jump back without losing scroll/history expectations */}
-            <Link to={backTo}>&larr; Back</Link>
-            {" · "}
-          </>
-        ) : null}
-        {/* back button takes user back to the parent idea detail page */}
-        <Link to={scene ? `/ideas/${scene.idea}` : "/ideas"}>&larr; Back to idea</Link>
-      </p>
-
-      <button type="button" onClick={handleLogout}>
-        Logout
-      </button>
-
       {error ? (
         <p style={{ color: "crimson", marginTop: 16 }}>{error}</p>
       ) : null}
@@ -252,7 +258,7 @@ function SceneDetailPage() {
             </h1>
           )}
           <p>
-            <strong>Last updated:</strong> {scene.timestamp}
+            <strong>Last updated:</strong> {formatTimestamp(scene.timestamp)}
           </p>
 
           <section style={{ marginTop: 24 }}>
@@ -319,84 +325,109 @@ function SceneDetailPage() {
             </div>
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 34 }}>
             <h2>Characters in this scene</h2>
-            {scene.characters.length > 0 ? (
-              <ul>
-                {/* create-character row in same style but includes sceneId so new character can be linked to this scene */}
+            <div style={{ padding: 10, maxHeight: 290, overflowY: "auto" }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 <li style={{ marginBottom: 12 }}>
-                  <strong>Create a new character</strong>
-                  {"  "}
-                  <Link
-                    to={`/ideas/${scene.idea}/characters/new?sceneId=${scene.id}`}
-                    state={{ from: `${location.pathname}${location.search}` }}>
-                    &rarr;
-                  </Link>
+                  <div
+                    style={{
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                      background: "var(--surface)",
+                      padding: "12px 14px",
+                    }}>
+                    <Link
+                      to={`/ideas/${scene.idea}/characters/new?sceneId=${scene.id}`}
+                      state={{ from: `${location.pathname}${location.search}` }}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        color: "inherit",
+                        textDecoration: "none",
+                      }}>
+                      <strong>Create a new character</strong>
+                      <span style={{ fontSize: "1.35rem", lineHeight: 1 }}>&rarr;</span>
+                    </Link>
+                  </div>
                 </li>
 
                 {scene.characters.map((character) => (
-                  <li key={character.id}>
-                    {editingCharacterId === character.id ? (
-                      <input
-                        autoFocus
-                        value={characterNameDraft}
-                        onChange={(e) => setCharacterNameDraft(e.target.value)}
-                        disabled={characterNameBusyId === character.id}
-                        onBlur={() => void saveCharacterName(character)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void saveCharacterName(character);
-                          } else if (e.key === "Escape") {
-                            setEditingCharacterId(null);
-                            setCharacterNameDraft("");
-                          }
-                        }}
-                        style={{ width: "100%", maxWidth: 420, marginBottom: 4 }}
-                      />
-                    ) : (
-                      <>
-                        <strong
-                          title="Double-click to rename"
-                          onDoubleClick={() => startCharacterNameEdit(character)}
-                          style={{ cursor: "text" }}>
-                          {character.name}
-                        </strong>
-                        {"  "}
-                        <Link
-                          to={`/characters/${character.id}`}
-                          state={{ from: `${location.pathname}${location.search}` }}>
-                          &rarr;
-                        </Link>
-                      </>
-                    )}
-                    {character.description ? (
-                      <p style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>
-                        {character.description}
-                      </p>
-                    ) : null}
+                  <li key={character.id} style={{ marginBottom: 12 }}>
+                    <div
+                      onClick={() => handleCharacterCardClick(character.id)}
+                      style={{
+                        border: "1px solid var(--border)",
+                        borderRadius: 12,
+                        background: "var(--surface)",
+                        padding: "12px 14px",
+                        cursor: "pointer",
+                      }}>
+                      {editingCharacterId === character.id ? (
+                        <input
+                          autoFocus
+                          value={characterNameDraft}
+                          onChange={(e) => setCharacterNameDraft(e.target.value)}
+                          disabled={characterNameBusyId === character.id}
+                          onBlur={() => void saveCharacterName(character)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void saveCharacterName(character);
+                            } else if (e.key === "Escape") {
+                              setEditingCharacterId(null);
+                              setCharacterNameDraft("");
+                            }
+                          }}
+                          style={{ width: "100%", marginBottom: 4 }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                          }}>
+                          <strong
+                            title="Double-click to rename"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              startCharacterNameEdit(character);
+                            }}
+                            style={{ cursor: "text" }}>
+                            {character.name}
+                          </strong>
+                          <span style={{ fontSize: "1.35rem", lineHeight: 1 }}>
+                            &rarr;
+                          </span>
+                        </div>
+                      )}
+                      {character.description ? (
+                        <p
+                          style={{
+                            margin: "6px 0 0",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {character.description}
+                        </p>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
-            ) : (
-              <>
-                <p>No characters linked to this scene yet</p>
-                <p>
-                  <strong>Create a new character</strong>
-                  {"  "}
-                  <Link
-                    to={`/ideas/${scene.idea}/characters/new?sceneId=${scene.id}`}
-                    state={{ from: `${location.pathname}${location.search}` }}>
-                    &rarr;
-                  </Link>
-                </p>
-              </>
-            )}
+            </div>
+            {scene.characters.length === 0 ? (
+              <p style={{ marginTop: 12 }}>No characters linked to this scene yet</p>
+            ) : null}
           </section>
 
-          <section style={{ marginTop: 24 }}>
-            <h2>Images in this scene</h2>
-            <div style={{ marginBottom: 10, position: "relative", display: "inline-block" }}>
+          <section style={{ marginTop: 48 }}>
+            <h2>Images related to this scene</h2>
+            <div style={{ marginTop: 16, marginBottom: 18, position: "relative", display: "inline-block" }}>
               {/* Add image trigger toggles menu with upload vs link choices */}
               <button type="button" onClick={() => setShowAddImageMenu((v) => !v)}>
                 Add an image
@@ -433,84 +464,163 @@ function SceneDetailPage() {
               ) : null}
             </div>
             {scene.images.length > 0 ? (
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  gap: 12,
+                  overflowX: "auto",
+                  whiteSpace: "nowrap",
+                }}>
                 {scene.images.map((image) => (
-                  <li key={image.id} style={{ marginBottom: 16 }}>
+                  <li key={image.id} style={{ width: 220, flex: "0 0 auto" }}>
                     <Link
                       to={`/images/${image.id}`}
                       state={{ from: `${location.pathname}${location.search}` }}
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      {image.image ? (
-                        <>
-                          {/* convert media paths to full URLs so uploaded files load in React */}
+                      style={{ textDecoration: "none", color: "inherit" }}>
+                      <div style={{ borderRadius: 10, padding: 8, background: "transparent" }}>
+                        {image.image ? (
                           <img
                             src={resolveImageSrcForDisplay(image.image) ?? ""}
                             alt={image.description ?? "scene image"}
-                            style={{ maxWidth: "100%", maxHeight: 240, display: "block" }}
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              objectFit: "cover",
+                              display: "block",
+                              borderRadius: 8,
+                            }}
                           />
-                        </>
-                      ) : null}
-                      <p>{image.description || "(no description)"}</p>
+                        ) : (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              borderRadius: 8,
+                              display: "grid",
+                              placeItems: "center",
+                              color: "var(--text-muted)",
+                              background: "var(--surface)",
+                            }}>
+                            No image
+                          </div>
+                        )}
+                        <p
+                          style={{
+                            margin: "8px 0 0",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {image.description || "(no description)"}
+                        </p>
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p>No images linked to this scene yet</p>
+              <p style={{ marginTop: 12 }}>No images linked to this scene yet</p>
             )}
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 48 }}>
             <h2>Drawings in this scene</h2>
             <p style={{ marginTop: 0, color: "#555" }}>
               Create drawings and reopen them later to continue editing.
             </p>
-            <p>
-              <strong>Create a new drawing</strong>
-              {"  "}
-              <Link
-                to={`/ideas/${scene.idea}/drawings/new?sceneId=${scene.id}`}
-                state={{ from: `${location.pathname}${location.search}` }}>
-                &rarr;
-              </Link>
-            </p>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/ideas/${scene.idea}/drawings/new?sceneId=${scene.id}`, {
+                  state: { from: `${location.pathname}${location.search}` },
+                })
+              }
+              style={{ marginTop: 10, marginBottom: 18 }}>
+              Create a new drawing
+            </button>
             {scene.drawings && scene.drawings.length > 0 ? (
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  gap: 12,
+                  overflowX: "auto",
+                  whiteSpace: "nowrap",
+                }}>
                 {scene.drawings.map((drawing) => (
-                  <li key={drawing.id} style={{ marginBottom: 16 }}>
+                  <li key={drawing.id} style={{ width: 220, flex: "0 0 auto" }}>
                     <Link
                       to={`/drawings/${drawing.id}`}
                       state={{ from: `${location.pathname}${location.search}` }
                       }
                       style={{ textDecoration: "none", color: "inherit" }}>
-                      {drawing.thumbnail_data_url ? (
-                        <img
-                          src={drawing.thumbnail_data_url}
-                          alt={drawing.title?.trim() ? drawing.title : "drawing thumbnail"}
-                          style={{ maxWidth: "100%", maxHeight: 180, display: "block", border: "1px solid #ddd", borderRadius: 6 }}
-                        />
-                      ) : null}
-                      <p style={{ marginTop: 8 }}>
-                        {drawing.title?.trim() ? drawing.title : `Drawing #${drawing.id}`}
-                      </p>
+                      <div style={{ borderRadius: 10, padding: 8, background: "transparent" }}>
+                        {drawing.thumbnail_data_url ? (
+                          <img
+                            src={drawing.thumbnail_data_url}
+                            alt={drawing.title?.trim() ? drawing.title : "drawing thumbnail"}
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              objectFit: "cover",
+                              display: "block",
+                              borderRadius: 8,
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              borderRadius: 8,
+                              display: "grid",
+                              placeItems: "center",
+                              color: "var(--text-muted)",
+                              background: "var(--surface)",
+                            }}>
+                            No preview
+                          </div>
+                        )}
+                        <p
+                          style={{
+                            margin: "8px 0 0",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {drawing.title?.trim() ? drawing.title : `Drawing #${drawing.id}`}
+                        </p>
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p>No drawings linked to this scene yet</p>
+              <p style={{ marginTop: 12 }}>No drawings linked to this scene yet</p>
             )}
           </section>
 
-          <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
+          <section style={{ marginTop: 42, paddingTop: 24, borderTop: "1px solid #ddd" }}>
             <h2 style={{ color: "#8b0000" }}>Delete scene</h2>
-            <p>This removes the scene and related scene data. This cannot be undone.</p>
+            <p style={{ marginTop: 10 }}>
+              This removes the scene and related scene data. This cannot be undone.
+            </p>
             <button
               type="button"
               onClick={() => void handleDeleteScene()} // call the handleDeleteScene function to delete the scene
               disabled={deleteBusy}
-              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              style={{
+                marginTop: 14,
+                background: "#c00",
+                color: "#fff",
+                border: "none",
+                padding: "8px 14px",
+              }}>
               {deleteBusy ? "Deleting..." : "Delete scene"}
             </button>
           </section>

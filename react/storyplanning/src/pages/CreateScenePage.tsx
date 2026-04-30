@@ -4,7 +4,7 @@
 // Submitting it redirects to scene detail page for the new scene just created, cancelling returns the user to the idea detail page
 
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { createScene } from "../api";
 
 function CreateScenePage() {
@@ -50,16 +50,22 @@ function CreateScenePage() {
   }
 
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to={Number.isNaN(ideaId) ? "/ideas" : `/ideas/${ideaId}`}>&larr; Cancel and return to idea</Link>
-      </p>
+    <main
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        padding: "0 1rem",
+        minHeight: "90vh",
+        display: "flex",
+        alignItems: "center",
+      }}>
+      <div style={{ width: "100%" }}>
 
       <h1>Create scene</h1>
-      <p>Title is required. Outline and script are optional.</p>
+      <p style={{ marginBottom: 18 }}>What's this scene about?</p>
 
       <form onSubmit={handleSubmit}>
-        <label htmlFor="scene-title">Title</label>
+        <label htmlFor="scene-title">Title (required)</label>
         <input
           id="scene-title"
           type="text"
@@ -101,6 +107,7 @@ function CreateScenePage() {
           </button>
         </div>
       </form>
+      </div>
     </main>
   );
 }

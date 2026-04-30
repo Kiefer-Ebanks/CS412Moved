@@ -3,7 +3,7 @@
 // Description: A form page to create a character for one idea and maybe tie it to one or more scenes
 
 import { type FormEvent, useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createCharacter, getIdea } from "../api";
 
 type FromState = { from?: string };
@@ -94,16 +94,21 @@ function CreateCharacterPage() {
   }
 
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link to={cancelTarget}>&larr; Cancel and return</Link>
-      </p>
-
+    <main
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        padding: "0 1rem",
+        minHeight: "90vh",
+        display: "flex",
+        alignItems: "center",
+      }}>
+      <div style={{ width: "100%" }}>
       <h1>Create character</h1>
-      <p>Name is required. Description is optional.</p>
+      <p style={{ marginBottom: 18 }}>Who is this and what do they do? What do they do in the story?</p>
 
       <form onSubmit={handleSubmit}>
-        <label htmlFor="character-name">Name</label>
+        <label htmlFor="character-name">Name (required)</label>
         <input
           id="character-name"
           type="text"
@@ -153,6 +158,7 @@ function CreateCharacterPage() {
           </button>
         </div>
       </form>
+      </div>
     </main>
   );
 }

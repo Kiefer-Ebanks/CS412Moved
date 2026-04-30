@@ -37,6 +37,9 @@ function AuthenticatedLayout() {
   const username = getStoredUsername();
   const stateFrom = (location.state as { from?: string } | null)?.from;
   const showIdeaDetailBack = /^\/ideas\/\d+$/.test(location.pathname);
+  const showSceneDetailBack = /^\/scenes\/\d+$/.test(location.pathname);
+  const showHeaderBack = showIdeaDetailBack || showSceneDetailBack;
+  const backLabel = showSceneDetailBack ? "\u2190 Back to idea" : "\u2190 Back";
   const backTarget = stateFrom ?? "/ideas";
 
   function handleLogout() {
@@ -53,9 +56,9 @@ function AuthenticatedLayout() {
           <h2 className="app-shell-title">FilmBoard</h2>
         </Link>
         <div className="app-shell-right">
-          {showIdeaDetailBack ? (
+          {showHeaderBack ? (
             <Link to={backTarget} className="app-shell-back-link">
-              &larr; Back
+              {backLabel}
             </Link>
           ) : null}
           <Link to="/account" className="app-shell-account-link"> {/* Link to the account page */}
