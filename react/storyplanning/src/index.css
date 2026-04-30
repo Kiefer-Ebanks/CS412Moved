@@ -100,16 +100,23 @@ select {
   justify-content: space-between;
   align-items: center;
   padding: 0.9rem 1.2rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  background: transparent;
   margin-bottom: 1rem;
 }
 
 .app-shell-title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.7rem;
   letter-spacing: 0.01em;
+}
+
+.app-shell-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.app-shell-title-link:hover {
+  color: inherit;
 }
 
 .app-shell-account-link {

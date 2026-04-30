@@ -38,7 +38,9 @@ function AuthenticatedLayout() {
     <>
       {/* Shared top bar for authenticated non-create pages */}
       <header className="app-shell-header">
-        <h2 className="app-shell-title">FilmBoard</h2>
+        <Link to="/ideas" className="app-shell-title-link"> {/* clicking on the filmboard logo links to the ideas page */}
+          <h2 className="app-shell-title">FilmBoard</h2>
+        </Link>
         <Link to="/account" className="app-shell-account-link"> {/* Link to the account page */}
           {username ?? "Account"}
         </Link>
@@ -122,7 +124,7 @@ function App() {
           }
         />
 
-        {/* All pages use this shared page header and inherit the layout similar to the base.html template for django pages */}
+        {/* All pages use this shared page header and inherit the layout similar to the base.html template for django page */}
         <Route
           element={
             <RequireAuth>
