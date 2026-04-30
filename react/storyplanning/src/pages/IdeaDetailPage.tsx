@@ -343,7 +343,7 @@ function IdeaDetailPage() {
             </div>
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 34 }}>
             <h2>Scenes</h2>
             <div
               style={{
@@ -352,6 +352,7 @@ function IdeaDetailPage() {
                 overflowY: "auto",
               }}>
               <div
+                onClick={() => navigate(`/ideas/${idea.id}/scenes/new`)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -361,9 +362,13 @@ function IdeaDetailPage() {
                   background: "var(--surface)",
                   padding: "0.8rem 1rem",
                   marginBottom: 10,
+                  cursor: "pointer",
                 }}>
                 <strong>Create a new scene</strong>
-                <Link to={`/ideas/${idea.id}/scenes/new`} style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
+                <Link
+                  to={`/ideas/${idea.id}/scenes/new`}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
                   &rarr;
                 </Link>
               </div>
@@ -442,7 +447,7 @@ function IdeaDetailPage() {
             </div>
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 60 }}>
             <h2>Characters</h2>
             <div
               style={{
@@ -451,6 +456,11 @@ function IdeaDetailPage() {
                 overflowY: "auto",
               }}>
               <div
+                onClick={() =>
+                  navigate(`/ideas/${idea.id}/characters/new`, {
+                    state: { from: `${location.pathname}${location.search}` },
+                  })
+                }
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -460,11 +470,13 @@ function IdeaDetailPage() {
                   background: "var(--surface)",
                   padding: "0.8rem 1rem",
                   marginBottom: 10,
+                  cursor: "pointer",
                 }}>
                 <strong>Create a new character</strong>
                 <Link
                   to={`/ideas/${idea.id}/characters/new`}
                   state={{ from: `${location.pathname}${location.search}` }}
+                  onClick={(e) => e.stopPropagation()}
                   style={{ textDecoration: "none", fontSize: "1.5rem", lineHeight: 1 }}>
                   &rarr;
                 </Link>
@@ -529,9 +541,9 @@ function IdeaDetailPage() {
             </div>
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 65 }}>
             <h2>Images</h2>
-            <div style={{ marginBottom: 10, position: "relative", display: "inline-block" }}>
+            <div style={{ marginTop: 8, marginBottom: 10, position: "relative", display: "inline-block" }}>
               {/* Add image trigger toggles menu with upload vs link choices */}
               <button type="button" onClick={() => setShowAddImageMenu((v) => !v)}>
                 Add an image
@@ -568,86 +580,176 @@ function IdeaDetailPage() {
               ) : null}
             </div>
             {idea.images && idea.images.length > 0 ? (
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <ul
+                style={{
+                  listStyle: "none",
+                  margin: 0,
+                  padding: "2px 0 10px",
+                  display: "flex",
+                  gap: 12,
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  whiteSpace: "nowrap",
+                }}>
                 {idea.images.map((img) => (
-                  <li key={img.id} style={{ marginBottom: 16 }}>
+                  <li key={img.id} style={{ width: 220, minWidth: 220, display: "inline-block" }}>
                     {/* whole card is clickable so we pass `from` for Back on the image detail page */}
                     <Link
                       to={`/images/${img.id}`}
                       state={{ from: `${location.pathname}${location.search}` }}
                       style={{ textDecoration: "none", color: "inherit" }}
                     >
-                      {img.image ? (
-                        <>
-                          {/* since the backend may return /media images we call resolveImageSrcForDisplay to add the Django host so <img> loads correctly */}
-                          <img
-                            src={resolveImageSrcForDisplay(img.image) ?? ""}
-                            alt={img.description ?? "idea image"}
-                            style={{ maxWidth: "100%", maxHeight: 240, display: "block" }}
-                          />
-                        </>
-                      ) : null}
-                      <p>{img.description || "No description"}</p>
+                      <div
+                        style={{
+                          borderRadius: 10,
+                          padding: 8,
+                        }}>
+                        {img.image ? (
+                          <>
+                            {/* since the backend may return /media images we call resolveImageSrcForDisplay to add the Django host so <img> loads correctly */}
+                            <img
+                              src={resolveImageSrcForDisplay(img.image) ?? ""}
+                              alt={img.description ?? "idea image"}
+                              style={{
+                                width: "100%",
+                                height: 150,
+                                objectFit: "cover",
+                                display: "block",
+                                borderRadius: 6,
+                                border: "1px solid var(--border)",
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderRadius: 6,
+                              border: "1px solid var(--border)",
+                              color: "var(--text-muted)",
+                            }}>
+                            No image
+                          </div>
+                        )}
+                        <p
+                          style={{
+                            marginTop: 8,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {img.description || "No description"}
+                        </p>
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p>No images yet</p>
+              <p style={{ marginTop: 10 }}>No images yet</p>
             )}
           </section>
 
-          <section style={{ marginTop: 24 }}>
+          <section style={{ marginTop: 34 }}>
             <h2>Drawings</h2>
             <p style={{ marginTop: 0, color: "#555" }}>
               Create drawings and reopen them later to continue editing.
             </p>
-            <p>
-              <strong>Create a new drawing</strong>
-              {"  "}
-              <Link
-                to={`/ideas/${idea.id}/drawings/new`}
-                state={{ from: `${location.pathname}${location.search}` }}>
-                &rarr;
-              </Link>
+            <p style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/ideas/${idea.id}/drawings/new`, {
+                    state: { from: `${location.pathname}${location.search}` },
+                  })
+                }>
+                Create a drawing
+              </button>
             </p>
             {idea.drawings && idea.drawings.length > 0 ? (
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <ul
+                style={{
+                  listStyle: "none",
+                  margin: 0,
+                  padding: "2px 0 10px",
+                  display: "flex",
+                  gap: 12,
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  whiteSpace: "nowrap",
+                }}>
                 {idea.drawings.map((drawing) => (
-                  <li key={drawing.id} style={{ marginBottom: 16 }}>
+                  <li key={drawing.id} style={{ width: 220, minWidth: 220, display: "inline-block" }}>
                     <Link
                       to={`/drawings/${drawing.id}`}
                       state={{ from: `${location.pathname}${location.search}` }}
                       style={{ textDecoration: "none", color: "inherit" }}>
-                      {drawing.thumbnail_data_url ? (
-                        <img
-                          src={drawing.thumbnail_data_url}
-                          alt={drawing.title?.trim() ? drawing.title : "drawing thumbnail"}
-                          style={{ maxWidth: "100%", maxHeight: 180, display: "block", border: "1px solid #ddd", borderRadius: 6 }}
-                        />
-                      ) : null}
-                      <p style={{ marginTop: 8 }}>
-                        {drawing.title?.trim() ? drawing.title : `Drawing #${drawing.id}`}
-                      </p>
+                      <div
+                        style={{
+                          borderRadius: 10,
+                          padding: 8,
+                        }}>
+                        {drawing.thumbnail_data_url ? (
+                          <img
+                            src={drawing.thumbnail_data_url}
+                            alt={drawing.title?.trim() ? drawing.title : "drawing thumbnail"}
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              objectFit: "cover",
+                              display: "block",
+                              border: "1px solid var(--border)",
+                              borderRadius: 6,
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderRadius: 6,
+                              border: "1px solid var(--border)",
+                              color: "var(--text-muted)",
+                            }}>
+                            No preview
+                          </div>
+                        )}
+                        <p
+                          style={{
+                            marginTop: 8,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {drawing.title?.trim() ? drawing.title : `Drawing #${drawing.id}`}
+                        </p>
+                      </div>
                     </Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p>No drawings yet</p>
+              <p style={{ marginTop: 10 }}>No drawings yet</p>
             )}
           </section>
 
-          <section style={{ marginTop: 36, paddingTop: 20, borderTop: "1px solid #ddd" }}>
+          <section style={{ marginTop: 46, paddingTop: 20, borderTop: "1px solid #ddd" }}>
             <h2 style={{ color: "#8b0000" }}>Delete idea</h2>
             <p>
-              This removes the idea and all related scenes, characters, and images. This cannot be undone.
+              This removes the idea and all related scenes, characters, and images. This cannot be undone
             </p>
             <button
               type="button"
               onClick={() => void handleDeleteIdea()}
               disabled={deleteBusy}
-              style={{ background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
+              style={{ marginTop: 10, background: "#c00", color: "#fff", border: "none", padding: "8px 14px" }}>
               {deleteBusy ? "Deleting..." : "Delete idea"}
             </button>
           </section>
